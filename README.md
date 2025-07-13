@@ -11,12 +11,14 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 
 ## ✨ Features
 
-- Clean, dark-mode dashboard UI (React + ShadCN)
-- Subdomain/subpath routing via NGINX
-- App lifecycle control via `systemd` (start, stop, logs)
-- YAML-based app registry
-- Cookiecutter-powered scaffolding for new apps
-- Zero-container architecture for lightweight deployments
+- **Modern Dashboard**: Clean, dark-mode UI built with React + Tailwind + ShadCN
+- **Smart Routing**: Automatic subdomain/subpath configuration via NGINX
+- **Process Management**: Full app lifecycle control via systemd (start, stop, logs)
+- **App Scaffolding**: Cookiecutter-powered templates for Flask, FastAPI, and Django
+- **Zero Containers**: Lightweight deployment using virtualenvs - no Docker overhead
+- **API-First**: RESTful API with Swagger documentation
+- **Search & Filter**: Find apps quickly with real-time search and grouping
+- **Built-in Docs**: Comprehensive documentation right in the dashboard
 
 ## 🧱 Architecture
 
@@ -26,24 +28,44 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
                               [ systemd / nginx ]
 ```
 
-## 🚀 Quickstart (Phase 1)
+## 🚀 Quick Installation
 
-> Requirements: Python 3.11+, Node 20+, NGINX, systemd
+### Prerequisites
+- Ubuntu 22.04+ (or similar Linux distro)
+- Python 3.11+
+- Root/sudo access
+
+### Option 1: Automated Setup (Recommended)
 
 ```bash
-# clone the repo
-git clone https://github.com/your-org/forgeboard.git && cd forgeboard
+# Clone the repository
+git clone https://github.com/your-org/forgeboard.git
+cd forgeboard
 
-# setup Python backend
+# Run the setup script
+sudo ./setup.sh
+```
+
+The setup script will:
+- Install all dependencies (Node.js, NGINX, etc.)
+- Set up ForgeBoard in `/opt/forgeboard`
+- Configure systemd and NGINX
+- Build and deploy the UI
+- Start all services
+
+### Option 2: Development Setup
+
+```bash
+# Backend
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-python main.py  # runs Flask API
+python main.py  # runs on http://localhost:5000
 
-# setup frontend
-cd ../frontend
+# Frontend (new terminal)
+cd frontend
 npm install
-npm run dev  # launches dashboard UI
+npm run dev  # runs on http://localhost:5173
 ```
 
 ## 📁 Repo Structure
@@ -56,21 +78,56 @@ forgeboard/
 └── apps.yml       # App registry (name, slug, port, status)
 ```
 
-## 🛠 Commands
+## 🛠 CLI & API
 
-| Action       | CLI/API                    |
-| ------------ | -------------------------- |
-| List apps    | `GET /api/apps`            |
-| Start app    | `POST /api/apps/start/:id` |
-| Stop app     | `POST /api/apps/stop/:id`  |
-| View logs    | `GET /api/apps/logs/:id`   |
-| Reload NGINX | `POST /api/nginx/reload`   |
+### ForgeBoard CLI
+```bash
+# Check system dependencies
+forgeboard-cli check
 
-## 🧪 Status
+# View service status
+forgeboard-cli status
 
-- ✅ Phase 1: YAML registry + NGINX routing + systemd lifecycle (in progress)
-- 🔜 Phase 2: React tile UI
-- 🔜 Phase 3: App scaffolding (cookiecutter)
+# Full installation
+sudo forgeboard-cli install --domain yourdomain.com
+```
+
+### API Endpoints
+
+| Action       | Endpoint                    | Description                |
+| ------------ | --------------------------- | -------------------------- |
+| List apps    | `GET /api/apps`            | Get all registered apps    |
+| Create app   | `POST /api/apps/create`    | Scaffold new app           |
+| Start app    | `POST /api/apps/:slug/start` | Start app via systemd    |
+| Stop app     | `POST /api/apps/:slug/stop`  | Stop app via systemd     |
+| View logs    | `GET /api/apps/:slug/logs`   | Tail app logs            |
+| Reload NGINX | `POST /api/nginx/reload`    | Apply NGINX changes       |
+
+API documentation available at `/docs` when ForgeBoard is running.
+
+## 📚 Documentation
+
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production installation and configuration
+- **[Planning Doc](docs/PLANNING.md)** - Architecture decisions and design philosophy  
+- **[Task Tracker](docs/TASK.md)** - Development roadmap and progress
+- **Built-in Docs** - Access comprehensive documentation in the dashboard
+
+## 🧪 Project Status
+
+- ✅ **Phase 1**: Core backend with YAML registry + NGINX + systemd
+- ✅ **Phase 2**: React dashboard with dark mode and modern UI
+- ✅ **Phase 3**: App scaffolding with Flask/FastAPI templates
+- ✅ **Phase 4**: Real-time logs and auto-reload functionality
+- ✅ **Phase 5**: Installation tools and documentation
+- 🔜 **Next**: Multi-user support, Git-based deployment, SSL automation
+
+## 🤝 Contributing
+
+ForgeBoard is designed to be simple and maintainable. When contributing:
+- Follow the "no overengineering" principle
+- Keep dependencies minimal
+- Write clear, readable code
+- Update documentation as needed
 
 ## 🧰 License
 

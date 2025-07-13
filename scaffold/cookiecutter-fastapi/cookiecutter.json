@@ -1,0 +1,10 @@
+{
+  "project_name": "My FastAPI App",
+  "project_slug": "{{ cookiecutter.project_name.lower().replace(' ', '-').replace('_', '-') }}",
+  "project_description": "A FastAPI application managed by ForgeBoard",
+  "author_name": "Your Name",
+  "author_email": "your.email@example.com",
+  "port": "9002",
+  "domain": "{{ cookiecutter.project_slug }}.local",
+  "python_version": "3.12"
+}

@@ -1,0 +1,524 @@
+#!/usr/bin/env python3
+"""
+ForgeBoard CLI - Bootstrap and management tool for ForgeBoard
+"""
+import os
+import sys
+import subprocess
+import argparse
+import shutil
+import json
+from pathlib import Path
+
+
+class Colors:
+    """Terminal colors for output"""
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
+def print_header(msg):
+    print(f"\n{Colors.HEADER}{Colors.BOLD}=== {msg} ==={Colors.ENDC}")
+
+
+def print_success(msg):
+    print(f"{Colors.OKGREEN}✓ {msg}{Colors.ENDC}")
+
+
+def print_error(msg):
+    print(f"{Colors.FAIL}✗ {msg}{Colors.ENDC}")
+
+
+def print_warning(msg):
+    print(f"{Colors.WARNING}! {msg}{Colors.ENDC}")
+
+
+def print_info(msg):
+    print(f"{Colors.OKBLUE}→ {msg}{Colors.ENDC}")
+
+
+def check_root():
+    """Check if running with root privileges"""
+    if os.geteuid() != 0:
+        print_error("This command must be run with sudo privileges")
+        sys.exit(1)
+
+
+def check_system_dependencies():
+    """Check if all required system dependencies are installed"""
+    print_header("Checking System Dependencies")
+    
+    dependencies = {
+        'python3': 'Python 3.11+',
+        'pip3': 'Python pip',
+        'nginx': 'NGINX web server',
+        'systemctl': 'systemd',
+        'node': 'Node.js 18+',
+        'npm': 'Node package manager',
+        'cookiecutter': 'Cookiecutter templating'
+    }
+    
+    missing = []
+    
+    for cmd, name in dependencies.items():
+        if shutil.which(cmd):
+            print_success(f"{name} found")
+        else:
+            print_error(f"{name} not found")
+            missing.append(name)
+    
+    # Check Python version
+    python_version = sys.version_info
+    if python_version.major == 3 and python_version.minor >= 11:
+        print_success(f"Python version {python_version.major}.{python_version.minor} is supported")
+    else:
+        print_error(f"Python version {python_version.major}.{python_version.minor} is not supported (requires 3.11+)")
+        missing.append("Python 3.11+")
+    
+    # Check Node version
+    try:
+        node_version = subprocess.check_output(['node', '--version'], text=True).strip()
+        major_version = int(node_version.split('.')[0].replace('v', ''))
+        if major_version >= 18:
+            print_success(f"Node.js version {node_version} is supported")
+        else:
+            print_error(f"Node.js version {node_version} is not supported (requires 18+)")
+            missing.append("Node.js 18+")
+    except:
+        pass
+    
+    if missing:
+        print_error(f"\nMissing dependencies: {', '.join(missing)}")
+        print_info("Install missing dependencies before continuing")
+        return False
+    
+    print_success("\nAll system dependencies satisfied")
+    return True
+
+
+def create_directory_structure():
+    """Create required directory structure"""
+    print_header("Creating Directory Structure")
+    
+    directories = [
+        '/opt/forgeboard',
+        '/opt/forgeboard/backend',
+        '/opt/forgeboard/frontend',
+        '/opt/forgeboard/scaffold',
+        '/var/www/apps',
+        '/var/log/forgeboard',
+        '/etc/forgeboard'
+    ]
+    
+    for directory in directories:
+        try:
+            os.makedirs(directory, exist_ok=True)
+            print_success(f"Created {directory}")
+        except Exception as e:
+            print_error(f"Failed to create {directory}: {e}")
+            return False
+    
+    return True
+
+
+def setup_permissions():
+    """Set up proper permissions for ForgeBoard directories"""
+    print_header("Setting Up Permissions")
+    
+    # Create forgeboard user if it doesn't exist
+    try:
+        subprocess.run(['id', 'forgeboard'], check=True, capture_output=True)
+        print_info("User 'forgeboard' already exists")
+    except:
+        try:
+            subprocess.run(['useradd', '-r', '-s', '/bin/false', 'forgeboard'], check=True)
+            print_success("Created system user 'forgeboard'")
+        except Exception as e:
+            print_error(f"Failed to create forgeboard user: {e}")
+            return False
+    
+    # Set ownership
+    directories = [
+        '/opt/forgeboard',
+        '/var/www/apps',
+        '/var/log/forgeboard'
+    ]
+    
+    for directory in directories:
+        try:
+            subprocess.run(['chown', '-R', 'www-data:www-data', directory], check=True)
+            print_success(f"Set ownership for {directory}")
+        except Exception as e:
+            print_error(f"Failed to set ownership for {directory}: {e}")
+            return False
+    
+    # Set permissions
+    try:
+        subprocess.run(['chmod', '755', '/opt/forgeboard'], check=True)
+        subprocess.run(['chmod', '755', '/var/www/apps'], check=True)
+        subprocess.run(['chmod', '755', '/var/log/forgeboard'], check=True)
+        print_success("Set directory permissions")
+    except Exception as e:
+        print_error(f"Failed to set permissions: {e}")
+        return False
+    
+    return True
+
+
+def install_backend(source_dir=None):
+    """Install backend application"""
+    print_header("Installing Backend")
+    
+    if not source_dir:
+        source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'backend')
+    
+    if not os.path.exists(source_dir):
+        print_error(f"Backend source directory not found: {source_dir}")
+        return False
+    
+    # Copy backend files
+    try:
+        subprocess.run(['cp', '-r', f"{source_dir}/.", '/opt/forgeboard/backend/'], check=True)
+        print_success("Copied backend files")
+    except Exception as e:
+        print_error(f"Failed to copy backend files: {e}")
+        return False
+    
+    # Create virtual environment
+    try:
+        os.chdir('/opt/forgeboard/backend')
+        subprocess.run([sys.executable, '-m', 'venv', 'venv'], check=True)
+        print_success("Created Python virtual environment")
+    except Exception as e:
+        print_error(f"Failed to create virtual environment: {e}")
+        return False
+    
+    # Install dependencies
+    try:
+        pip_path = '/opt/forgeboard/backend/venv/bin/pip'
+        subprocess.run([pip_path, 'install', '-r', 'requirements.txt'], check=True)
+        subprocess.run([pip_path, 'install', 'gunicorn'], check=True)
+        print_success("Installed Python dependencies")
+    except Exception as e:
+        print_error(f"Failed to install dependencies: {e}")
+        return False
+    
+    # Create initial apps.yml if it doesn't exist
+    apps_yml_path = '/opt/forgeboard/backend/apps.yml'
+    if not os.path.exists(apps_yml_path):
+        with open(apps_yml_path, 'w') as f:
+            f.write("apps: []\n")
+        print_success("Created initial apps.yml")
+    
+    return True
+
+
+def install_frontend(source_dir=None):
+    """Build and install frontend application"""
+    print_header("Installing Frontend")
+    
+    if not source_dir:
+        source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'frontend')
+    
+    if not os.path.exists(source_dir):
+        print_error(f"Frontend source directory not found: {source_dir}")
+        return False
+    
+    # Build frontend
+    try:
+        os.chdir(source_dir)
+        print_info("Installing npm dependencies...")
+        subprocess.run(['npm', 'install'], check=True)
+        print_info("Building frontend...")
+        subprocess.run(['npm', 'run', 'build'], check=True)
+        print_success("Built frontend application")
+    except Exception as e:
+        print_error(f"Failed to build frontend: {e}")
+        return False
+    
+    # Copy built files
+    try:
+        dist_path = os.path.join(source_dir, 'dist')
+        subprocess.run(['cp', '-r', f"{dist_path}/.", '/opt/forgeboard/frontend/'], check=True)
+        print_success("Installed frontend files")
+    except Exception as e:
+        print_error(f"Failed to copy frontend files: {e}")
+        return False
+    
+    return True
+
+
+def install_scaffold_templates(source_dir=None):
+    """Install cookiecutter templates"""
+    print_header("Installing Scaffold Templates")
+    
+    if not source_dir:
+        source_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scaffold')
+    
+    if not os.path.exists(source_dir):
+        print_error(f"Scaffold source directory not found: {source_dir}")
+        return False
+    
+    try:
+        subprocess.run(['cp', '-r', f"{source_dir}/.", '/opt/forgeboard/scaffold/'], check=True)
+        print_success("Installed scaffold templates")
+    except Exception as e:
+        print_error(f"Failed to copy scaffold templates: {e}")
+        return False
+    
+    return True
+
+
+def create_systemd_service():
+    """Create systemd service for ForgeBoard"""
+    print_header("Creating Systemd Service")
+    
+    service_content = """[Unit]
+Description=ForgeBoard API Server
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/forgeboard/backend
+Environment="PATH=/opt/forgeboard/backend/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="APPS_CONFIG=/opt/forgeboard/backend/apps.yml"
+ExecStart=/opt/forgeboard/backend/venv/bin/gunicorn --bind 127.0.0.1:5000 --workers 2 main:app
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+"""
+    
+    try:
+        with open('/etc/systemd/system/forgeboard.service', 'w') as f:
+            f.write(service_content)
+        print_success("Created systemd service file")
+    except Exception as e:
+        print_error(f"Failed to create service file: {e}")
+        return False
+    
+    # Reload systemd and enable service
+    try:
+        subprocess.run(['systemctl', 'daemon-reload'], check=True)
+        subprocess.run(['systemctl', 'enable', 'forgeboard'], check=True)
+        print_success("Enabled ForgeBoard service")
+    except Exception as e:
+        print_error(f"Failed to enable service: {e}")
+        return False
+    
+    return True
+
+
+def configure_nginx(domain='localhost'):
+    """Configure NGINX for ForgeBoard"""
+    print_header("Configuring NGINX")
+    
+    nginx_config = f"""server {{
+    listen 80;
+    server_name {domain};
+
+    # Frontend
+    location / {{
+        root /opt/forgeboard/frontend;
+        try_files $uri $uri/ /index.html;
+    }}
+
+    # API proxy
+    location /api {{
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }}
+
+    # Swagger docs
+    location /docs {{
+        proxy_pass http://127.0.0.1:5000/docs;
+        proxy_set_header Host $host;
+    }}
+
+    location /flasgger_static {{
+        proxy_pass http://127.0.0.1:5000/flasgger_static;
+    }}
+
+    location /apispec.json {{
+        proxy_pass http://127.0.0.1:5000/apispec.json;
+    }}
+}}
+"""
+    
+    try:
+        with open('/etc/nginx/sites-available/forgeboard', 'w') as f:
+            f.write(nginx_config)
+        print_success("Created NGINX configuration")
+    except Exception as e:
+        print_error(f"Failed to create NGINX config: {e}")
+        return False
+    
+    # Enable site
+    try:
+        if os.path.exists('/etc/nginx/sites-enabled/forgeboard'):
+            os.remove('/etc/nginx/sites-enabled/forgeboard')
+        subprocess.run(['ln', '-s', '/etc/nginx/sites-available/forgeboard', 
+                       '/etc/nginx/sites-enabled/'], check=True)
+        print_success("Enabled NGINX site")
+    except Exception as e:
+        print_error(f"Failed to enable NGINX site: {e}")
+        return False
+    
+    # Test NGINX config
+    try:
+        subprocess.run(['nginx', '-t'], check=True)
+        print_success("NGINX configuration valid")
+    except Exception as e:
+        print_error(f"NGINX configuration invalid: {e}")
+        return False
+    
+    return True
+
+
+def start_services():
+    """Start ForgeBoard and reload NGINX"""
+    print_header("Starting Services")
+    
+    try:
+        subprocess.run(['systemctl', 'start', 'forgeboard'], check=True)
+        print_success("Started ForgeBoard service")
+    except Exception as e:
+        print_error(f"Failed to start ForgeBoard: {e}")
+        return False
+    
+    try:
+        subprocess.run(['systemctl', 'reload', 'nginx'], check=True)
+        print_success("Reloaded NGINX")
+    except Exception as e:
+        print_error(f"Failed to reload NGINX: {e}")
+        return False
+    
+    return True
+
+
+def check_status():
+    """Check status of ForgeBoard services"""
+    print_header("Service Status")
+    
+    # Check ForgeBoard service
+    try:
+        result = subprocess.run(['systemctl', 'is-active', 'forgeboard'], 
+                              capture_output=True, text=True)
+        if result.stdout.strip() == 'active':
+            print_success("ForgeBoard service is running")
+        else:
+            print_error("ForgeBoard service is not running")
+    except:
+        print_error("Could not check ForgeBoard service status")
+    
+    # Check NGINX
+    try:
+        result = subprocess.run(['systemctl', 'is-active', 'nginx'], 
+                              capture_output=True, text=True)
+        if result.stdout.strip() == 'active':
+            print_success("NGINX is running")
+        else:
+            print_error("NGINX is not running")
+    except:
+        print_error("Could not check NGINX status")
+    
+    # Check API health
+    try:
+        import requests
+        response = requests.get('http://localhost:5000/api/health', timeout=5)
+        if response.status_code == 200:
+            print_success("ForgeBoard API is responding")
+        else:
+            print_error("ForgeBoard API returned error")
+    except:
+        print_warning("Could not reach ForgeBoard API")
+    
+    print_info("\nForgeBoard should be accessible at http://localhost/")
+
+
+def install_forgeboard(args):
+    """Full installation of ForgeBoard"""
+    check_root()
+    
+    print_header("ForgeBoard Installation")
+    print_info(f"Domain: {args.domain}")
+    print_info(f"Source directory: {args.source_dir or 'current directory'}")
+    
+    if not check_system_dependencies():
+        sys.exit(1)
+    
+    steps = [
+        create_directory_structure,
+        setup_permissions,
+        lambda: install_backend(args.source_dir),
+        lambda: install_frontend(args.source_dir),
+        lambda: install_scaffold_templates(args.source_dir),
+        create_systemd_service,
+        lambda: configure_nginx(args.domain),
+        start_services
+    ]
+    
+    for step in steps:
+        if not step():
+            print_error("\nInstallation failed!")
+            sys.exit(1)
+    
+    print_success("\n✨ ForgeBoard installation complete!")
+    check_status()
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description='ForgeBoard CLI - Bootstrap and management tool',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  sudo forgeboard-cli install                    # Install ForgeBoard
+  sudo forgeboard-cli install --domain myapp.com # Install with custom domain
+  forgeboard-cli check                           # Check dependencies
+  forgeboard-cli status                          # Check service status
+        """
+    )
+    
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    
+    # Install command
+    install_parser = subparsers.add_parser('install', help='Install ForgeBoard')
+    install_parser.add_argument('--domain', default='localhost', 
+                               help='Domain for ForgeBoard (default: localhost)')
+    install_parser.add_argument('--source-dir', 
+                               help='Source directory containing ForgeBoard files')
+    
+    # Check command
+    check_parser = subparsers.add_parser('check', help='Check system dependencies')
+    
+    # Status command
+    status_parser = subparsers.add_parser('status', help='Check service status')
+    
+    args = parser.parse_args()
+    
+    if args.command == 'install':
+        install_forgeboard(args)
+    elif args.command == 'check':
+        check_system_dependencies()
+    elif args.command == 'status':
+        check_status()
+    else:
+        parser.print_help()
+
+
+if __name__ == '__main__':
+    main()

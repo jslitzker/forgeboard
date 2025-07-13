@@ -1,0 +1,205 @@
+@import "tailwindcss";
+
+/* Ensure dark mode is enabled */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  :root {
+    /* Modern neutral palette */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    
+    /* Refined primary colors with better contrast */
+    --primary: 219 100% 50%;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Subtle secondary colors */
+    --secondary: 217 91% 96%;
+    --secondary-foreground: 215 20% 25%;
+    
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 216 92% 95%;
+    --accent-foreground: 215 20% 25%;
+    
+    /* Semantic colors */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 69% 44%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    /* UI elements */
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 244 87% 57%;
+    --radius: 0.5rem;
+    
+    /* Spacing scale */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    
+    /* Typography scale */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+    
+    /* Font weights */
+    --font-normal: 400;
+    --font-medium: 500;
+    --font-semibold: 600;
+    --font-bold: 700;
+  }
+
+  .dark {
+    /* Modern dark theme with true blacks */
+    --background: 224 71% 3%;
+    --foreground: 213 31% 95%;
+    --card: 224 71% 5%;
+    --card-foreground: 213 31% 95%;
+    --popover: 224 71% 5%;
+    --popover-foreground: 213 31% 95%;
+    
+    /* Adjusted for dark mode contrast */
+    --primary: 219 100% 60%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 213 31% 95%;
+    
+    --muted: 215 28% 17%;
+    --muted-foreground: 217 10% 64%;
+    --accent: 215 28% 17%;
+    --accent-foreground: 213 31% 95%;
+    
+    /* Semantic colors dark mode */
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 69% 44%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 244 87% 64%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+  
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  /* Subtle card styles */
+  .card {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+  }
+  
+  .card-hover {
+    transition: all 0.2s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Modern button styles */
+  .btn-primary {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+  }
+  
+  .btn-primary:hover {
+    background: hsl(var(--primary) / 0.9);
+  }
+  
+  /* Status indicators */
+  .status-active {
+    background: hsl(var(--success));
+  }
+  
+  .status-inactive {
+    background: hsl(var(--muted));
+  }
+  
+  .status-error {
+    background: hsl(var(--destructive));
+  }
+  
+  /* Typography utilities */
+  .text-gradient-subtle {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* Clean animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Focus states */
+  .focus-ring {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+  }
+  
+  .focus-ring:focus-visible {
+    outline-color: hsl(var(--ring));
+  }
+  
+  /* Loading states */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted)),
+      hsl(var(--muted) / 0.5),
+      hsl(var(--muted))
+    );
+    background-size: 200% 100%;
+    animation: skeleton 1.5s ease-in-out infinite;
+  }
+  
+  @keyframes skeleton {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+}

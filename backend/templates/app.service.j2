@@ -1,0 +1,45 @@
+[Unit]
+Description=ForgeBoard App: {{ app.name }}
+After=network.target
+
+[Service]
+Type=simple
+User={{ user | default('www-data') }}
+Group={{ group | default('www-data') }}
+WorkingDirectory={{ app.path }}
+Environment="PATH={{ app.virtualenv }}/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONPATH={{ app.path }}"
+{% if app.type == 'flask' %}
+Environment="FLASK_APP={{ app.entry_point }}"
+Environment="FLASK_ENV=production"
+ExecStart={{ app.virtualenv }}/bin/python -m flask run --host=0.0.0.0 --port={{ app.port }}
+{% elif app.type == 'fastapi' %}
+ExecStart={{ app.virtualenv }}/bin/uvicorn {{ app.entry_point.replace('.py', '') }}:app --host 0.0.0.0 --port {{ app.port }}
+{% elif app.type == 'django' %}
+ExecStart={{ app.virtualenv }}/bin/gunicorn --bind 0.0.0.0:{{ app.port }} --workers 2 {{ app.entry_point.replace('.py', '') }}.wsgi:application
+{% else %}
+ExecStart={{ app.virtualenv }}/bin/python {{ app.entry_point }}
+{% endif %}
+
+# Restart policy
+Restart=on-failure
+RestartSec=5s
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths={{ app.path }}
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=forgeboard-{{ app.slug }}
+
+[Install]
+WantedBy=multi-user.target

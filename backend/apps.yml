@@ -1,0 +1,22 @@
+apps:
+  - name: "Sample Flask App"
+    slug: "sample-flask"
+    port: 9001
+    type: "flask"
+    status: "stopped"
+    domain: "sample.local"
+    path: "/var/www/apps/sample-flask"
+    virtualenv: "/var/www/apps/sample-flask/venv"
+    entry_point: "app.py"
+    description: "A sample Flask application for testing"
+    
+  - name: "API Service"
+    slug: "api-service"
+    port: 9002
+    type: "fastapi"
+    status: "stopped"
+    domain: "api.local"
+    path: "/var/www/apps/api-service"
+    virtualenv: "/var/www/apps/api-service/venv"
+    entry_point: "main.py"
+    description: "FastAPI service for backend operations"

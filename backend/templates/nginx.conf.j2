@@ -1,0 +1,56 @@
+# ForgeBoard NGINX configuration for {{ app.name }}
+# Generated on {{ timestamp }}
+
+server {
+    listen 80;
+    server_name {{ app.domain }};
+
+    # Logging
+    access_log /var/log/nginx/{{ app.slug }}_access.log;
+    error_log /var/log/nginx/{{ app.slug }}_error.log;
+
+    # Proxy settings
+    location / {
+        proxy_pass http://127.0.0.1:{{ app.port }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket support
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        
+        # Timeouts
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
+        # Buffer settings
+        proxy_buffering off;
+        proxy_request_buffering off;
+    }
+
+    # Health check endpoint
+    location /health {
+        proxy_pass http://127.0.0.1:{{ app.port }}/health;
+        access_log off;
+    }
+
+    # Static files (if applicable)
+    location /static/ {
+        alias {{ app.path }}/static/;
+        expires 1d;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # Security headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Size limits
+    client_max_body_size 10M;
+}

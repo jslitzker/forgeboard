@@ -1,0 +1,30 @@
+apps:
+  - name: Sample Flask App
+    slug: sample-flask
+    port: 5001
+    type: flask
+    status: stopped
+    domain: sample-flask.local
+    path: /home/administrator/apps/sample-flask
+    virtualenv: /home/administrator/apps/sample-flask/venv
+    entry_point: app.py
+  
+  - name: Demo FastAPI Service
+    slug: demo-fastapi
+    port: 5002
+    type: fastapi
+    status: stopped
+    domain: demo-fastapi.local
+    path: /home/administrator/apps/demo-fastapi
+    virtualenv: /home/administrator/apps/demo-fastapi/venv
+    entry_point: main.py
+  
+  - name: Test Django App
+    slug: test-django
+    port: 5003
+    type: django
+    status: stopped
+    domain: test-django.local
+    path: /home/administrator/apps/test-django
+    virtualenv: /home/administrator/apps/test-django/venv
+    entry_point: manage.py
