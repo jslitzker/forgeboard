@@ -1,205 +1,201 @@
-# ForgeBoard Product Roadmap
+# ForgeBoard - Product Roadmap
 
 ## 🎯 Vision
+ForgeBoard: The simplest way to deploy Python apps on a single server, without container complexity.
 
-ForgeBoard aims to be the simplest, most transparent way to deploy and manage Python applications on a single server, offering the power of modern DevOps practices without the complexity of containers or orchestration platforms.
+## 🚀 Release Schedule
 
-## 📊 Current State (v1.0 - MVP Complete)
+### v1.1 - Security Update (February 2025)
+**Theme**: Make ForgeBoard secure for team use
+**Duration**: 2 weeks
 
-### ✅ What We Have
-- **Full-featured dashboard** with dark mode and responsive design
-- **Complete API** with Swagger documentation
-- **App lifecycle management** via systemd
-- **Automatic routing** via NGINX
-- **App scaffolding** with Flask/FastAPI templates
-- **One-command installation** with setup.sh
-- **CLI management tool** for automation
-- **Built-in documentation** system
+#### Core Features
+- [ ] **JWT Authentication**
+  - Login/logout functionality
+  - Session management
+  - API key support for automation
+- [ ] **User Management**
+  - Basic user CRUD
+  - Password reset flow
+  - User preferences storage
 
-### 📈 Success Metrics Achieved
-- ✅ Zero-downtime deployments
-- ✅ Sub-second app status updates
-- ✅ < 100MB memory footprint
-- ✅ Single command installation
-- ✅ Clean, intuitive UI
+#### Technical Tasks
+- Add Flask-JWT-Extended
+- Create auth middleware
+- Build login UI component
+- Secure all API endpoints
 
-## 🚀 Q1 2025: Security & Authentication
+---
 
-### Goals
-Enable ForgeBoard for team environments with proper access control
+### v1.2 - Developer Experience (March 2025)
+**Theme**: Streamline app configuration and deployment
+**Duration**: 3 weeks
 
-### Features
-1. **Basic Authentication** (2 weeks)
-   - JWT-based API authentication
-   - Login page with session management
-   - API key support for automation
+#### Core Features
+- [ ] **Environment Variables**
+  - UI for env var management
+  - Secure secret storage
+  - Template support
+- [ ] **SSL/HTTPS Automation**
+  - Let's Encrypt integration
+  - Auto-renewal setup
+  - Force HTTPS option
+- [ ] **Import Tool**
+  - Import existing apps
+  - Auto-detect app type
+  - Dependency analysis
 
-2. **User Management** (2 weeks)
-   - User CRUD operations
-   - Role-based access (admin/developer/viewer)
-   - Per-user app namespaces
+#### Technical Tasks
+- Extend apps.yml schema
+- Integrate python-decouple
+- Add certbot wrapper
+- Create import wizard UI
 
-3. **Audit & Compliance** (1 week)
-   - Activity logging for all actions
-   - Login attempt tracking
-   - Export audit logs
+---
 
-### Technical Tasks
-- Add Flask-JWT-Extended to backend
-- Create login/user management UI components
-- Implement middleware for API protection
-- Add user field to apps.yml schema
+### v2.0 - Git Integration (June 2025)
+**Theme**: Enable continuous deployment workflows
+**Duration**: 4 weeks
 
-## 🌟 Q2 2025: Developer Experience
+#### Core Features
+- [ ] **Git Deployment**
+  - GitHub/GitLab webhooks
+  - Branch-based environments
+  - Commit history view
+- [ ] **Deployment Management**
+  - One-click rollback
+  - Deployment history
+  - Pre/post deploy hooks
+- [ ] **Multi-User Support**
+  - Role-based access (admin/dev/viewer)
+  - Per-user app namespaces
+  - Audit logging
 
-### Goals
-Make ForgeBoard the fastest way to go from code to production
+#### Technical Tasks
+- Build webhook receiver
+- Implement git operations
+- Add deployment tracking
+- Create RBAC system
 
-### Features
-1. **Environment Management** (2 weeks)
-   - UI for environment variables
-   - Secret management with encryption
-   - Environment templates
+---
 
-2. **Git Integration** (3 weeks)
-   - Webhook receiver for GitHub/GitLab
-   - Auto-deploy on push
-   - Branch-based deployments
-   - Rollback functionality
+### v2.5 - Monitoring & Analytics (September 2025)
+**Theme**: Provide visibility into app health
+**Duration**: 5 weeks
 
-3. **SSL Automation** (1 week)
-   - Let's Encrypt integration
-   - Auto-renewal management
-   - Force HTTPS option
+#### Core Features
+- [ ] **Real-time Monitoring**
+  - WebSocket live logs
+  - CPU/Memory graphs
+  - Request metrics
+- [ ] **Alerting System**
+  - Email notifications
+  - Webhook alerts
+  - Custom alert rules
+- [ ] **Performance Tools**
+  - Resource limits
+  - Auto-scaling rules
+  - Database pooling
 
-4. **Import/Export Tools** (1 week)
-   - Import existing apps
-   - Export app configurations
-   - Backup/restore functionality
+#### Technical Tasks
+- Add Socket.IO support
+- Integrate psutil
+- Build metrics collector
+- Create alert engine
 
-### Technical Tasks
-- Integrate python-decouple for env management
-- Add git webhook endpoint
-- Implement certbot wrapper
-- Create import/export CLI commands
+---
 
-## 📊 Q3 2025: Monitoring & Performance
+### v3.0 - Enterprise Ready (December 2025)
+**Theme**: Scale ForgeBoard for larger organizations
+**Duration**: 6 weeks
 
-### Goals
-Provide visibility into app health and resource usage
+#### Core Features
+- [ ] **Advanced Auth**
+  - LDAP/AD integration
+  - SAML/OAuth2 SSO
+  - 2FA support
+- [ ] **Multi-tenancy**
+  - Organization management
+  - Resource quotas
+  - Usage tracking
+- [ ] **High Availability**
+  - Multi-node support
+  - Load balancing
+  - Backup automation
 
-### Features
-1. **Real-time Monitoring** (3 weeks)
-   - WebSocket-based live logs
-   - CPU/Memory usage graphs
-   - Request/response metrics
-   - Custom health check endpoints
-
-2. **Alerting System** (2 weeks)
-   - Email notifications
-   - Webhook alerts
-   - Slack/Discord integration
-   - Custom alert rules
-
-3. **Performance Optimization** (2 weeks)
-   - Resource limit configuration
-   - Auto-scaling within VM limits
-   - Database connection pooling
-   - Redis caching layer
-
-### Technical Tasks
-- Add psutil for resource monitoring
-- Implement Socket.IO for real-time data
-- Create metrics collection service
-- Build notification service
-
-## 🏢 Q4 2025: Enterprise Features
-
-### Goals
-Make ForgeBoard suitable for larger organizations
-
-### Features
-1. **Advanced Authentication** (3 weeks)
-   - LDAP/Active Directory support
-   - SAML/OAuth2 SSO
-   - 2FA support
-   - API gateway features
-
-2. **Multi-tenant Architecture** (4 weeks)
-   - Organization management
-   - Resource quotas
-   - Billing/usage tracking
-   - Isolated environments
-
-3. **High Availability** (3 weeks)
-   - Multi-node support
-   - Load balancing
-   - Automated failover
-   - Disaster recovery
-
-### Technical Tasks
-- Integrate python-ldap
+#### Technical Tasks
+- Add auth providers
 - Implement tenant isolation
-- Add HAProxy support
-- Create backup automation
+- Build cluster management
+- Create backup system
 
-## 🔮 Future Considerations (2026+)
+---
 
-### Platform Expansion
-- **Container Support**: Optional Docker integration for specific use cases
-- **Language Support**: Node.js, Ruby, Go applications
-- **Database Management**: Integrated PostgreSQL/MySQL provisioning
-- **Edge Deployment**: Support for ARM/embedded systems
+## 📊 Prioritization Matrix
 
-### Integration Ecosystem
-- **CI/CD Platforms**: Jenkins, GitHub Actions, GitLab CI
-- **Monitoring Tools**: Prometheus, Grafana, DataDog
-- **Cloud Providers**: AWS, Azure, GCP deployment helpers
-- **IaC Tools**: Terraform provider, Ansible modules
+### Near Term (Q1 2025)
+**Focus**: Security & Core Features
+1. Basic authentication (Critical)
+2. Environment variables (High)
+3. SSL support (High)
+4. Import tool (Medium)
 
-### Advanced Features
-- **GraphQL API**: Modern API alternative
-- **Plugin System**: Extensible architecture
-- **Mobile App**: iOS/Android management apps
-- **AI Assistant**: Deployment recommendations
+### Mid Term (Q2-Q3 2025)
+**Focus**: Developer Productivity
+1. Git integration (High)
+2. Deployment automation (High)
+3. Monitoring dashboard (Medium)
+4. Alert system (Medium)
 
-## 📋 Implementation Principles
-
-1. **Maintain Simplicity**: Every feature must have a clear use case
-2. **Transparent Operation**: Users should understand what's happening
-3. **Progressive Disclosure**: Advanced features shouldn't complicate basic usage
-4. **Performance First**: Features shouldn't degrade core performance
-5. **Security by Default**: Secure configurations out of the box
+### Long Term (Q4 2025+)
+**Focus**: Enterprise & Scale
+1. SSO integration (Medium)
+2. Multi-tenancy (Low)
+3. HA clustering (Low)
+4. Advanced analytics (Low)
 
 ## 🎯 Success Metrics
 
 ### Technical Goals
 - Support 100+ apps per VM
 - < 1s deployment time
-- 99.9% uptime SLA
-- < 5 minute setup time
+- 99.9% uptime
+- < 5 minute setup
 
-### Business Goals
-- 1000+ active installations
-- 50+ GitHub stars
-- Active community contributions
-- Enterprise customer adoption
+### Community Goals
+- 1000+ installations
+- 50+ contributors
+- Active Discord/forum
+- Plugin ecosystem
 
-## 📅 Release Schedule
+## 💡 Future Considerations (2026+)
 
-- **v1.1** (Feb 2025): Basic authentication
-- **v1.2** (Mar 2025): Environment management
-- **v2.0** (Jun 2025): Git integration + SSL
-- **v2.5** (Sep 2025): Monitoring dashboard
-- **v3.0** (Dec 2025): Enterprise features
+### Platform Expansion
+- Container support (optional)
+- Multiple language support
+- Edge deployment
+- Desktop app
 
-## 🤝 Community Involvement
+### Integrations
+- CI/CD platforms
+- Cloud providers
+- Monitoring tools
+- Database services
 
-We welcome contributions in these areas:
-- Additional app templates (Django, static sites)
-- Language translations
-- Platform ports (Debian, RHEL)
-- Integration plugins
-- Documentation improvements
+## 🤝 How to Contribute
 
-Join us in making Python deployment simple and enjoyable!
+### Current Needs
+1. **Templates**: Django, static site generators
+2. **Integrations**: Popular services
+3. **Documentation**: Tutorials, videos
+4. **Testing**: Edge cases, scale testing
+
+### Get Involved
+- GitHub Issues: Feature requests & bugs
+- Discord: Community discussion
+- Pull Requests: Code contributions
+- Spread the word: Blog posts, tweets
+
+---
+
+**Note**: This roadmap is subject to change based on community feedback and priorities. Join the discussion on GitHub!
