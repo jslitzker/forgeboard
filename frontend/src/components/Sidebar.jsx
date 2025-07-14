@@ -128,7 +128,7 @@ const Sidebar = ({ darkMode, collapsed, setCollapsed, activeItem = 'dashboard', 
               "text-xs",
               darkMode ? 'text-gray-500' : 'text-gray-400'
             )}>
-              ForgeBoard v0.1.0
+              ForgeBoard v1.0.0
             </div>
           )}
         </div>
