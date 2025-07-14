@@ -83,7 +83,11 @@ export const AuthProvider = ({ children }) => {
       // Set user data
       setUser(data.user);
       
-      return { success: true, user: data.user };
+      return { 
+        success: true, 
+        user: data.user,
+        password_change_required: data.user.password_change_required 
+      };
     } catch (error) {
       console.error('Login error:', error);
       return { success: false, error: error.message };
@@ -208,6 +212,15 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
+      
+      // Update user data to reflect password change completion
+      if (user) {
+        setUser({
+          ...user,
+          password_change_required: false
+        });
+      }
+      
       return { success: true, message: data.message };
     } catch (error) {
       console.error('Password change error:', error);
@@ -332,6 +345,10 @@ export const AuthProvider = ({ children }) => {
     return user && user.is_admin;
   };
 
+  const requiresPasswordChange = () => {
+    return user && user.password_change_required === true;
+  };
+
   // Initialize authentication state
   useEffect(() => {
     const initAuth = async () => {
@@ -376,6 +393,7 @@ export const AuthProvider = ({ children }) => {
     revokeApiKey,
     isAuthenticated,
     isAdmin,
+    requiresPasswordChange,
     makeAuthenticatedRequest,
   };
 

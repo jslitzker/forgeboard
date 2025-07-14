@@ -5,6 +5,7 @@ import { Button } from './ui/button';
 import { Card } from './ui/card';
 import UserManagement from './UserManagement';
 import ApiKeyManagement from './ApiKeyManagement';
+import SSLManagement from './SSLManagement';
 import Settings from './Settings';
 
 const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
@@ -18,6 +19,7 @@ const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
     ] : []),
     ...(isAdmin() ? [
       { id: 'users', label: 'Users', icon: Users },
+      { id: 'ssl', label: 'SSL Certificates', icon: Shield },
     ] : []),
   ];
 
@@ -71,6 +73,10 @@ const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
         
         {activeTab === 'users' && isAdmin() && (
           <UserManagement darkMode={darkMode} />
+        )}
+        
+        {activeTab === 'ssl' && isAdmin() && (
+          <SSLManagement darkMode={darkMode} />
         )}
       </div>
     </div>

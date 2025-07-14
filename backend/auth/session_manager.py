@@ -104,12 +104,9 @@ class SessionManager:
             if not user:
                 raise ValueError("User not found")
             
-            # Generate JTI (JWT ID) for token tracking
-            jti = secrets.token_urlsafe(32)
-            
             # Create access token
             access_token = create_access_token(
-                identity=user_id,
+                identity=str(user_id),  # Convert to string for Flask-JWT-Extended compatibility
                 additional_claims={
                     'username': user.username,
                     'email': user.email,
@@ -119,10 +116,15 @@ class SessionManager:
                 }
             )
             
+            # Extract JTI from the created token
+            import jwt as jwt_lib
+            token_payload = jwt_lib.decode(access_token, options={"verify_signature": False})
+            jti = token_payload.get('jti')
+            
             # Create refresh token if enabled
             refresh_token = None
             if self.refresh_enabled:
-                refresh_token = create_refresh_token(identity=user_id)
+                refresh_token = create_refresh_token(identity=str(user_id))
             
             # Create session record
             session = Session.create_session(
@@ -132,7 +134,7 @@ class SessionManager:
                 duration_seconds=self.session_timeout
             )
             
-            # Update session with JTI
+            # Update session with actual JTI from JWT
             session.token = jti
             session.refresh_token = refresh_token
             session.save()
@@ -151,11 +153,22 @@ class SessionManager:
             raise
     
     def validate_session(self, token: str) -> AuthResult:
-        """Validate session token."""
+        """Validate session token using Flask-JWT-Extended."""
         try:
-            # Decode JWT without verification first to get JTI
-            unverified_payload = jwt.decode(token, options={"verify_signature": False})
-            jti = unverified_payload.get('jti')
+            # Use Flask-JWT-Extended to verify the token
+            from flask_jwt_extended import decode_token
+            
+            try:
+                payload = decode_token(token)
+            except Exception as e:
+                return AuthResult.failure_result(
+                    AuthError.TOKEN_INVALID,
+                    f"Invalid token: {str(e)}"
+                )
+            
+            # Extract JTI and user ID
+            jti = payload.get('jti')
+            user_id = payload.get('sub')
             
             if not jti:
                 return AuthResult.failure_result(
@@ -178,26 +191,16 @@ class SessionManager:
                     "Session expired or revoked"
                 )
             
-            # Verify JWT token
+            # Get user (convert string subject back to integer)
+            user_id_str = payload.get('sub')
             try:
-                payload = jwt.decode(
-                    token,
-                    current_app.config['JWT_SECRET_KEY'],
-                    algorithms=[current_app.config['JWT_ALGORITHM']]
-                )
-            except jwt.ExpiredSignatureError:
-                return AuthResult.failure_result(
-                    AuthError.TOKEN_EXPIRED,
-                    "Token has expired"
-                )
-            except jwt.InvalidTokenError:
+                user_id = int(user_id_str)
+            except (ValueError, TypeError):
                 return AuthResult.failure_result(
                     AuthError.TOKEN_INVALID,
-                    "Invalid token"
+                    "Invalid user ID in token"
                 )
             
-            # Get user
-            user_id = payload.get('sub')
             user = User.query.get(user_id)
             if not user:
                 return AuthResult.failure_result(

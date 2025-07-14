@@ -13,6 +13,8 @@ import SettingsWithAuth from './components/SettingsWithAuth'
 import Documentation from './components/Documentation'
 import AuthModal from './components/auth/AuthModal'
 import UserMenu from './components/auth/UserMenu'
+import SignInPage from './components/SignInPage'
+import PasswordChangeRequired from './components/auth/PasswordChangeRequired'
 import { Moon, Sun, RefreshCw, Plus, Sparkles, Zap, Activity, Square, Package, Search, LayoutDashboard, FileText, Settings as SettingsIcon, Book, LogIn } from 'lucide-react'
 import { Button } from './components/ui/button'
 
@@ -43,6 +45,7 @@ const AuthSection = ({ darkMode, onShowAuthModal }) => {
 };
 
 function AppContent() {
+  const { isAuthenticated, requiresPasswordChange, loading: authLoading } = useAuth()
   const [apps, setApps] = useState([])
   const [filteredApps, setFilteredApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -62,6 +65,7 @@ function AppContent() {
     window.matchMedia('(prefers-color-scheme: dark)').matches
   )
 
+  // All hooks must be called before any conditional returns
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark')
@@ -95,6 +99,41 @@ function AppContent() {
   useEffect(() => {
     setFilteredApps(apps)
   }, [apps])
+
+  // Listen for hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.substring(1)
+      if (hash && ['dashboard', 'apps', 'logs', 'settings', 'docs'].includes(hash)) {
+        setActiveSection(hash)
+      }
+    }
+
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  // Show sign-in page if not authenticated
+  if (!authLoading && !isAuthenticated()) {
+    return <SignInPage darkMode={darkMode} />
+  }
+
+  // Show password change page if required
+  if (!authLoading && isAuthenticated() && requiresPasswordChange()) {
+    return <PasswordChangeRequired darkMode={darkMode} />
+  }
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>
+        <div className="flex items-center space-x-3">
+          <RefreshCw className="h-8 w-8 text-blue-600 animate-spin" />
+          <span className={`text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>Loading...</span>
+        </div>
+      </div>
+    )
+  }
 
   const handleSearchChange = (searchTerm) => {
     const filtered = apps.filter(app => 
@@ -176,19 +215,6 @@ function AppContent() {
     }
     return breadcrumbMap[activeSection] || []
   }
-
-  // Listen for hash changes
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.substring(1)
-      if (hash && ['dashboard', 'apps', 'logs', 'settings', 'docs'].includes(hash)) {
-        setActiveSection(hash)
-      }
-    }
-
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
 
   return (
     <div className={`min-h-screen flex transition-colors duration-200 ${darkMode ? 'bg-gray-950' : 'bg-gray-50'}`}>

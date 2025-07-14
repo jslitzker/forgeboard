@@ -246,9 +246,13 @@ Full API documentation with interactive testing available at `/docs` when ForgeB
 
 ## 📚 Documentation
 
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production installation and configuration
-- **[Planning Doc](docs/PLANNING.md)** - Architecture decisions and design philosophy  
-- **[Task Tracker](docs/TASK.md)** - Development roadmap and progress
+- **[Setup Guide](docs/SETUP.md)** - Development and production installation
+- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment and configuration
+- **[Configuration Guide](docs/CONFIGURATION.md)** - Authentication and system configuration
+- **[Frontend Guide](docs/FRONTEND.md)** - Frontend development and architecture
+- **[Testing Guide](docs/TESTING.md)** - UI testing and validation
+- **[Project Roadmap](docs/ROADMAP.md)** - Development roadmap and future plans
+- **[Project Status](docs/STATUS.md)** - Current implementation status
 - **Built-in Docs** - Access comprehensive documentation in the dashboard
 
 ## 🧪 Project Status

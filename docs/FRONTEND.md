@@ -1,6 +1,6 @@
-# ForgeBoard Frontend
+# ForgeBoard Frontend Development Guide
 
-React-based dashboard for ForgeBoard app management system.
+React-based dashboard for ForgeBoard app management system with modern UI components and authentication.
 
 ## Tech Stack
 

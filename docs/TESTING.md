@@ -1,4 +1,4 @@
-# ForgeBoard Navigation Testing Guide
+# ForgeBoard Frontend Testing Guide
 
 ## Testing URL
 Open your browser to: http://localhost:5174/
