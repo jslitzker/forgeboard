@@ -11,21 +11,42 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 
 ## ✨ Features
 
-- **Modern Dashboard**: Clean, dark-mode UI built with React + Tailwind + ShadCN
-- **Smart Routing**: Automatic subdomain/subpath configuration via NGINX
-- **Process Management**: Full app lifecycle control via systemd (start, stop, logs)
-- **App Scaffolding**: Cookiecutter-powered templates for Flask, FastAPI, and Django
-- **Zero Containers**: Lightweight deployment using virtualenvs - no Docker overhead
-- **API-First**: RESTful API with Swagger documentation
+### Core Functionality
+- **App Lifecycle Management**: Start, stop, and monitor Python apps via systemd
+- **Smart Routing**: Automatic NGINX configuration for subdomain/subpath routing
+- **App Scaffolding**: Create new apps instantly with Flask/FastAPI templates
+- **Virtual Environments**: Each app runs in its own isolated Python environment
+- **Real-time Logs**: View and search application logs directly from the dashboard
+- **YAML Registry**: Simple, transparent app configuration storage
+
+### Developer Experience
+- **Modern Dashboard**: Clean, responsive UI with dark mode support
+- **RESTful API**: Full-featured API with Swagger/OpenAPI documentation
 - **Search & Filter**: Find apps quickly with real-time search and grouping
-- **Built-in Docs**: Comprehensive documentation right in the dashboard
+- **Built-in Documentation**: Comprehensive guides accessible within the dashboard
+- **CLI Tool**: Command-line interface for automation and scripting
+- **One-line Install**: Production deployment in minutes with `setup.sh`
+
+### Technical Benefits
+- **Zero Containers**: No Docker/Kubernetes complexity - just Python and systemd
+- **Lightweight**: Minimal resource usage compared to container solutions
+- **Transparent**: All configuration in readable YAML and standard Linux services
+- **Extensible**: Easy to add new app types and deployment patterns
 
 ## 🧱 Architecture
 
 ```
-[ Dashboard UI ] ⇄ [ Flask API Manager ] ⇄ [ apps.yml / SQLite ]
-                                      ⇣
-                              [ systemd / nginx ]
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   React UI      │────▶│   Flask API     │────▶│   apps.yml      │
+│  (Dashboard)    │◀────│   (Manager)     │◀────│  (Registry)     │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+              ┌──────────┐             ┌──────────┐
+              │ systemd  │             │  NGINX   │
+              │(Process) │             │(Routing) │
+              └──────────┘             └──────────┘
 ```
 
 ## 🚀 Quick Installation
@@ -39,7 +60,7 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/forgeboard.git
+git clone https://github.com/jslitzker/forgeboard.git
 cd forgeboard
 
 # Run the setup script
@@ -72,10 +93,20 @@ npm run dev  # runs on http://localhost:5173
 
 ```
 forgeboard/
-├── backend/       # Flask API (metadata, systemctl, nginx integration)
-├── frontend/      # React UI (dashboard tiles, dark mode, controls)
-├── scaffold/      # Cookiecutter templates (Flask, FastAPI, etc.)
-└── apps.yml       # App registry (name, slug, port, status)
+├── backend/           # Flask API server
+│   ├── main.py       # API endpoints and app logic
+│   ├── utils/        # Helper modules (YAML, NGINX, systemd)
+│   └── templates/    # Jinja2 templates for config generation
+├── frontend/          # React dashboard
+│   ├── src/          # React components and UI logic
+│   └── public/       # Static assets
+├── scaffold/          # Cookiecutter templates
+│   ├── cookiecutter-flask/
+│   └── cookiecutter-fastapi/
+├── docs/             # Project documentation
+├── forgeboard-cli    # CLI management tool
+├── setup.sh          # One-line installation script
+└── apps.yml          # App registry (created on first run)
 ```
 
 ## 🛠 CLI & API
@@ -94,16 +125,22 @@ sudo forgeboard-cli install --domain yourdomain.com
 
 ### API Endpoints
 
-| Action       | Endpoint                    | Description                |
-| ------------ | --------------------------- | -------------------------- |
-| List apps    | `GET /api/apps`            | Get all registered apps    |
-| Create app   | `POST /api/apps/create`    | Scaffold new app           |
-| Start app    | `POST /api/apps/:slug/start` | Start app via systemd    |
-| Stop app     | `POST /api/apps/:slug/stop`  | Stop app via systemd     |
-| View logs    | `GET /api/apps/:slug/logs`   | Tail app logs            |
-| Reload NGINX | `POST /api/nginx/reload`    | Apply NGINX changes       |
+| Action          | Endpoint                        | Description                    |
+| --------------- | ------------------------------- | ------------------------------ |
+| Health check    | `GET /api/health`              | API health status              |
+| List apps       | `GET /api/apps`                | Get all registered apps        |
+| Get app details | `GET /api/apps/:slug`          | Get specific app details       |
+| Create app      | `POST /api/apps/create`        | Scaffold new app from template |
+| Update app      | `PUT /api/apps/:slug`          | Update app configuration       |
+| Delete app      | `DELETE /api/apps/:slug`       | Remove app from registry       |
+| Start app       | `POST /api/apps/:slug/start`   | Start app via systemd          |
+| Stop app        | `POST /api/apps/:slug/stop`    | Stop app via systemd           |
+| View logs       | `GET /api/apps/:slug/logs`     | Tail app logs (last n lines)  |
+| Reload NGINX    | `POST /api/nginx/reload`       | Apply all NGINX changes        |
+| Update NGINX    | `POST /api/apps/:slug/nginx`   | Update single app NGINX config |
+| Check perms     | `GET /api/system/permissions`  | Verify system permissions      |
 
-API documentation available at `/docs` when ForgeBoard is running.
+Full API documentation with interactive testing available at `/docs` when ForgeBoard is running.
 
 ## 📚 Documentation
 

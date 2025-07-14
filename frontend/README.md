@@ -1,12 +1,72 @@
-# React + Vite
+# ForgeBoard Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React-based dashboard for ForgeBoard app management system.
 
-Currently, two official plugins are available:
+## Tech Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** - UI framework
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Utility-first styling
+- **ShadCN UI** - Component library
+- **Lucide Icons** - Icon set
 
-## Expanding the ESLint configuration
+## Development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## Project Structure
+
+```
+src/
+├── components/         # React components
+│   ├── ui/            # Reusable UI components (buttons, cards, etc.)
+│   ├── Dashboard.jsx  # Main dashboard view
+│   ├── AppCard.jsx    # Individual app display
+│   ├── LogViewer.jsx  # Real-time log viewer
+│   └── ...
+├── lib/               # Utility functions
+├── App.jsx           # Main app component with routing
+├── main.jsx          # Entry point
+└── index.css         # Global styles and Tailwind imports
+```
+
+## Key Features
+
+- **Dark Mode**: Toggle between light and dark themes
+- **Real-time Updates**: App status refreshes automatically
+- **Search & Filter**: Find apps quickly
+- **Responsive Design**: Works on mobile and desktop
+- **Hash Routing**: Navigation without page refreshes
+
+## Navigation
+
+The app uses hash-based routing for these sections:
+- `#dashboard` - Overview and stats
+- `#apps` - App management
+- `#logs` - Log viewer
+- `#settings` - User preferences
+- `#docs` - Documentation
+
+## API Integration
+
+The frontend connects to the Flask backend API running on port 5000. In development, Vite proxies `/api` requests to avoid CORS issues.
+
+## Building for Production
+
+```bash
+npm run build
+```
+
+This creates optimized files in the `dist/` directory, ready to be served by NGINX.
