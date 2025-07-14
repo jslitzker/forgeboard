@@ -9,7 +9,7 @@
 
 Forgeboard is a self-hosted developer dashboard for managing multiple Python-based micro-apps—such as Flask, FastAPI, and Django—on a single Linux VM. It simplifies app deployment, routing, and lifecycle control using `systemd` and `NGINX`—no Docker, no Kubernetes, no nonsense.
 
-> **🔐 Authentication System**: Now includes secure multi-user authentication with local and Azure AD support, encrypted configuration storage, and comprehensive audit logging.
+> **🔐 Authentication System**: Complete multi-user authentication with local password-based login, JWT sessions, API key management, email notifications, and comprehensive security features.
 
 ## ✨ Features
 
@@ -31,11 +31,13 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 
 ### Security & Authentication
 - **Multi-User Support**: Local authentication with password-based login
-- **Azure AD Integration**: Enterprise authentication with group-based roles
+- **JWT Sessions**: Secure token-based authentication with automatic refresh
+- **API Key Management**: Secure API access with permission-based keys
+- **Email Notifications**: SMTP and OAuth2 support for password reset
+- **Rate Limiting**: Protection against brute force attacks
+- **Password Security**: Bcrypt hashing with complexity requirements
 - **Encrypted Configuration**: Sensitive settings stored encrypted in SQLite database
-- **API Key Management**: Secure API access with user-specific keys
 - **Audit Logging**: Comprehensive tracking of all user actions and system events
-- **Session Management**: Secure session handling with expiration and refresh
 
 ### Technical Benefits
 - **Zero Containers**: No Docker/Kubernetes complexity - just Python and systemd
@@ -73,8 +75,10 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 - **SQLite Database**: Secure storage for users, sessions, configuration, and audit logs
 - **Encrypted Storage**: Sensitive configuration values encrypted at rest
 - **Local Auth**: Password-based authentication with bcrypt hashing
-- **Azure AD**: Enterprise authentication with MSAL integration
-- **Session Management**: JWT-based sessions with refresh token support
+- **JWT Sessions**: Token-based authentication with automatic refresh
+- **API Keys**: Permission-based programmatic access
+- **Email Service**: SMTP and OAuth2 email notifications
+- **Rate Limiting**: In-memory protection against brute force attacks
 
 ## 🚀 Quick Installation
 

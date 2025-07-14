@@ -84,15 +84,24 @@ python backend/config/bootstrap.py --generate-keys  # Generate secure keys
 - `POST /api/nginx/reload` - Reload all NGINX configurations
 - `POST /api/apps/:slug/nginx` - Update single app NGINX config
 
-### Authentication (Future Implementation)
-- `GET /api/auth/method` - Get current auth method and configuration
-- `POST /api/auth/login` - Unified login endpoint
-- `POST /api/auth/logout` - Unified logout
+### Authentication (Implemented)
+- `POST /api/auth/login` - Login with username/password
+- `POST /api/auth/logout` - Logout and invalidate session
+- `POST /api/auth/register` - Register new user account
 - `GET /api/auth/me` - Get current user info
+- `POST /api/auth/forgot-password` - Request password reset email
+- `POST /api/auth/reset-password` - Reset password with token
+- `POST /api/auth/change-password` - Change user password
 - `GET /api/users` - List all users (admin only)
 - `POST /api/users` - Create user (admin only)
 - `GET /api/me/api-keys` - List current user's API keys
-- `POST /api/me/api-keys` - Create new API key
+- `POST /api/me/api-keys` - Create new API key with permissions
+- `DELETE /api/me/api-keys/:id` - Revoke API key
+- `GET /api/admin/auth/config` - Get authentication configuration (admin only)
+- `POST /api/admin/auth/config` - Update authentication configuration (admin only)
+- `GET /api/admin/auth/stats` - Get authentication statistics (admin only)
+- `GET /api/admin/email/config` - Get email configuration (admin only)
+- `POST /api/admin/email/config` - Update email configuration (admin only)
 
 ## Important Files
 
@@ -117,13 +126,24 @@ python backend/config/bootstrap.py --generate-keys  # Generate secure keys
 - `backend/database/connection.py` - Database connection and initialization
 - `backend/database/models/` - SQLAlchemy models for all data structures
 - `backend/database/migrations/` - Database migration management
+- `backend/auth/` - Authentication system with provider pattern
+- `backend/auth/providers/local.py` - Local authentication with password hashing
+- `backend/auth/session_manager.py` - JWT session management
+- `backend/auth/api_key_manager.py` - API key management system
+- `backend/auth/email_service.py` - Email notifications (SMTP/OAuth2)
+- `backend/auth/rate_limiter.py` - Rate limiting for security
 
 ### Frontend
-- `frontend/src/App.jsx` - Main React component with routing
+- `frontend/src/App.jsx` - Main React component with routing and authentication
 - `frontend/src/components/Dashboard.jsx` - Dashboard overview
 - `frontend/src/components/AppCard.jsx` - Individual app controls
 - `frontend/src/components/LogViewer.jsx` - Real-time log display
 - `frontend/src/components/Documentation.jsx` - Built-in docs
+- `frontend/src/components/SettingsWithAuth.jsx` - Settings with authentication tabs
+- `frontend/src/contexts/AuthContext.jsx` - Authentication context provider
+- `frontend/src/components/auth/` - Authentication UI components
+- `frontend/src/components/UserManagement.jsx` - User management (admin only)
+- `frontend/src/components/ApiKeyManagement.jsx` - API key management
 
 ### Tools
 - `forgeboard-cli` - CLI tool for installation and management
@@ -139,11 +159,12 @@ The React dashboard uses hash-based routing with these main sections:
 - `#settings` - User preferences and system configuration
 - `#docs` - Built-in documentation with search
 
-### Authentication UI (Future Implementation)
-- `#login` - Login page supporting local and Azure AD authentication
-- `#users` - User management interface (admin only)
-- `#profile` - User profile and API key management
-- `#admin` - System configuration and authentication settings
+### Authentication UI (Implemented)
+- Authentication modal with login/register forms
+- User management interface (admin only) - accessible via settings
+- API key management - accessible via settings for authenticated users
+- Protected routes and authentication context
+- Email notifications for password reset and user activities
 
 ## Design Principles
 
@@ -163,23 +184,24 @@ The React dashboard uses hash-based routing with these main sections:
 
 ## Current Status
 
-ForgeBoard is feature-complete for MVP with all core functionality implemented:
+ForgeBoard is feature-complete for MVP with comprehensive authentication system implemented:
 - ✅ Full backend API with systemd/NGINX integration
 - ✅ Modern React dashboard with dark mode
 - ✅ App scaffolding with cookiecutter templates
 - ✅ Real-time log viewer
 - ✅ Automated installation tools
 - ✅ Comprehensive documentation
-- ✅ Authentication system database foundation (Phase 1 complete)
+- ✅ **Complete Authentication System** - Local authentication with JWT sessions
 
 ### Authentication Implementation Progress
 - ✅ **Phase 1: Database Foundation** - SQLite database with encrypted configuration
-- ⏳ **Phase 2: Local Authentication** - Password-based authentication system
-- 📅 **Phase 3: Configuration UI** - Web interface for system configuration
-- 📅 **Phase 4: Authentication API** - REST API for user management
-- 📅 **Phase 5: Frontend Authentication** - Login UI and protected routes
-- 📅 **Phase 6: Azure AD Integration** - Enterprise authentication
-- 📅 **Phase 7: Security & Testing** - Comprehensive security hardening
-- 📅 **Phase 8: CLI Integration** - Command-line authentication tools
+- ✅ **Phase 2: Local Authentication** - Password-based authentication system with security features
+- ✅ **Phase 3: Configuration UI** - Web interface for system configuration
+- ✅ **Phase 4: Authentication API** - REST API for user management and authentication
+- ✅ **Phase 5: Frontend Authentication** - Login UI, protected routes, and authentication context
+- ✅ **Phase 6: Email System** - SMTP and OAuth2 email notifications for password reset
+- ✅ **Phase 7: Security Features** - Rate limiting, password hashing, API key management
+- 📅 **Phase 8: Azure AD Integration** - Enterprise authentication (future)
+- 📅 **Phase 9: CLI Integration** - Command-line authentication tools (future)
 
-Next phase focuses on implementing local authentication, then Azure AD integration and enterprise features.
+**Current Status**: ForgeBoard now includes a complete authentication system with local authentication, user management, API key management, email notifications, and comprehensive security features. The system is ready for production deployment with enterprise features like Azure AD integration planned for future releases.

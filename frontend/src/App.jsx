@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import AppCard from './components/AppCard'
 import AppGroupView from './components/AppGroupView'
 import LogViewer from './components/LogViewer'
@@ -8,12 +9,40 @@ import SearchFilter from './components/SearchFilter'
 import Breadcrumb from './components/Breadcrumb'
 import Dashboard from './components/Dashboard'
 import LogsView from './components/LogsView'
-import Settings from './components/Settings'
+import SettingsWithAuth from './components/SettingsWithAuth'
 import Documentation from './components/Documentation'
-import { Moon, Sun, RefreshCw, Plus, Sparkles, Zap, Activity, Square, Package, Search, LayoutDashboard, FileText, Settings as SettingsIcon, Book } from 'lucide-react'
+import AuthModal from './components/auth/AuthModal'
+import UserMenu from './components/auth/UserMenu'
+import { Moon, Sun, RefreshCw, Plus, Sparkles, Zap, Activity, Square, Package, Search, LayoutDashboard, FileText, Settings as SettingsIcon, Book, LogIn } from 'lucide-react'
 import { Button } from './components/ui/button'
 
-function App() {
+const AuthSection = ({ darkMode, onShowAuthModal }) => {
+  const { user, loading, isAuthenticated } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse" />
+    );
+  }
+
+  if (isAuthenticated()) {
+    return <UserMenu darkMode={darkMode} />;
+  }
+
+  return (
+    <Button
+      onClick={onShowAuthModal}
+      variant="outline"
+      size="sm"
+      className={darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}
+    >
+      <LogIn className="h-4 w-4 mr-2" />
+      Sign In
+    </Button>
+  );
+};
+
+function AppContent() {
   const [apps, setApps] = useState([])
   const [filteredApps, setFilteredApps] = useState([])
   const [loading, setLoading] = useState(true)
@@ -21,6 +50,7 @@ function App() {
   const [selectedApp, setSelectedApp] = useState(null)
   const [showLogs, setShowLogs] = useState(false)
   const [showCreateWizard, setShowCreateWizard] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [activeSection, setActiveSection] = useState(() => {
     const hash = window.location.hash.substring(1)
@@ -218,6 +248,8 @@ function App() {
                   <Moon className="h-4 w-4" />
                 )}
               </Button>
+              
+              <AuthSection darkMode={darkMode} onShowAuthModal={() => setShowAuthModal(true)} />
             </div>
           </div>
         </div>
@@ -380,7 +412,7 @@ function App() {
             )}
             
             {activeSection === 'settings' && (
-              <Settings 
+              <SettingsWithAuth 
                 darkMode={darkMode}
                 setDarkMode={setDarkMode}
               />
@@ -414,7 +446,21 @@ function App() {
           }}
         />
       )}
+      
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        darkMode={darkMode}
+      />
     </div>
+  )
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   )
 }
 
