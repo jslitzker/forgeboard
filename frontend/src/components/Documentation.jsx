@@ -3845,6 +3845,36 @@ net.core.netdev_max_backlog = 65535
 
   const currentContent = getContent(activeSection, activeContent)
 
+  // Create a flat array of all content items for navigation
+  const allContentItems = sections.flatMap(section => 
+    section.content.map(item => ({
+      ...item,
+      sectionId: section.id
+    }))
+  )
+
+  // Find current index
+  const currentIndex = allContentItems.findIndex(
+    item => item.sectionId === activeSection && item.id === activeContent
+  )
+
+  // Navigation handlers
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      const prevItem = allContentItems[currentIndex - 1]
+      setActiveSection(prevItem.sectionId)
+      setActiveContent(prevItem.id)
+    }
+  }
+
+  const handleNext = () => {
+    if (currentIndex < allContentItems.length - 1) {
+      const nextItem = allContentItems[currentIndex + 1]
+      setActiveSection(nextItem.sectionId)
+      setActiveContent(nextItem.id)
+    }
+  }
+
   const CodeBlock = ({ children, language = 'bash' }) => (
     <pre className={cn(
       "p-4 rounded-lg overflow-x-auto text-sm",
@@ -3990,186 +4020,177 @@ net.core.netdev_max_backlog = 65535
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
-      <div>
-        <h1 className={cn(
-          "text-3xl font-bold",
-          darkMode ? 'text-gray-100' : 'text-gray-900'
-        )}>
-          Documentation
-        </h1>
-        <p className={cn(
-          "text-sm mt-1",
-          darkMode ? 'text-gray-400' : 'text-gray-600'
-        )}>
-          Learn how to deploy and manage your applications with ForgeBoard
-        </p>
+      {/* Page Title and Search */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className={cn(
+            "text-3xl font-bold",
+            darkMode ? 'text-gray-100' : 'text-gray-900'
+          )}>
+            Documentation
+          </h1>
+          <p className={cn(
+            "text-sm mt-1",
+            darkMode ? 'text-gray-400' : 'text-gray-600'
+          )}>
+            Learn how to deploy and manage your applications with ForgeBoard
+          </p>
+        </div>
+        <div className="relative w-72">
+          <Search className={cn(
+            "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
+            darkMode ? 'text-gray-400' : 'text-gray-500'
+          )} />
+          <input
+            type="text"
+            placeholder="Search docs..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className={cn(
+              "w-full pl-10 pr-4 py-2 rounded-lg border transition-colors text-sm",
+              darkMode 
+                ? 'bg-gray-900 border-gray-800 text-gray-100 placeholder-gray-500 hover:bg-gray-800' 
+                : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 hover:bg-gray-50',
+              "focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            )}
+          />
+        </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex gap-8">
-        {/* Sidebar Navigation */}
-        <aside className={cn(
-          "w-72 shrink-0",
-          "sticky top-6 h-[calc(100vh-12rem)]"
+      {/* Quick Search Info */}
+      {searchTerm && (
+        <div className={cn(
+          "p-4 rounded-lg mb-6",
+          darkMode ? 'bg-gray-900 border border-gray-800' : 'bg-blue-50 border border-blue-200'
         )}>
-          {/* Search */}
-          <div className="relative mb-6">
-            <Search className={cn(
-              "absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4",
-              darkMode ? 'text-gray-400' : 'text-gray-500'
-            )} />
-            <input
-              type="text"
-              placeholder="Search documentation..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={cn(
-                "w-full pl-10 pr-4 py-2 rounded-lg border transition-colors text-sm",
-                darkMode 
-                  ? 'bg-gray-900 border-gray-800 text-gray-100 placeholder-gray-500 hover:bg-gray-800' 
-                  : 'bg-white border-gray-200 text-gray-900 placeholder-gray-400 hover:bg-gray-50',
-                "focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              )}
-            />
-          </div>
+          <p className={cn(
+            "text-sm",
+            darkMode ? 'text-gray-300' : 'text-gray-700'
+          )}>
+            Searching for: <span className="font-medium">{searchTerm}</span>
+            {currentContent.body.toLowerCase().includes(searchTerm.toLowerCase()) && (
+              <span className={cn(
+                "ml-2",
+                darkMode ? 'text-green-400' : 'text-green-600'
+              )}>
+                ✓ Found in current section
+              </span>
+            )}
+          </p>
+        </div>
+      )}
 
-        {/* Navigation */}
-        <nav className="space-y-6">
-          {filteredSections.map((section) => {
+      {/* Section Tabs */}
+      <div className={cn(
+        "border-b",
+        darkMode ? 'border-gray-800' : 'border-gray-200'
+      )}>
+        <nav className="-mb-px flex space-x-8">
+          {sections.map((section) => {
             const Icon = section.icon
             return (
-              <div key={section.id}>
-                <div className={cn(
-                  "text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2",
-                  darkMode ? 'text-gray-500' : 'text-gray-400'
-                )}>
-                  <Icon className="h-3.5 w-3.5" />
-                  {section.title}
-                </div>
-                <ul className="space-y-1">
-                  {section.content.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        onClick={() => {
-                          setActiveSection(section.id)
-                          setActiveContent(item.id)
-                        }}
-                        className={cn(
-                          "w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200",
-                          activeContent === item.id ? (
-                            darkMode
-                              ? 'bg-gradient-to-r from-blue-900/30 to-blue-800/30 text-blue-400 border-l-2 border-blue-500 pl-2.5'
-                              : 'bg-gradient-to-r from-blue-50 to-blue-100 text-blue-700 border-l-2 border-blue-500 pl-2.5'
-                          ) : (
-                            darkMode
-                              ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/50'
-                              : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                          )
-                        )}
-                      >
-                        {item.title}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <button
+                key={section.id}
+                onClick={() => {
+                  setActiveSection(section.id)
+                  setActiveContent(section.content[0].id)
+                }}
+                className={cn(
+                  "group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm",
+                  activeSection === section.id
+                    ? darkMode
+                      ? 'border-blue-500 text-blue-400'
+                      : 'border-blue-500 text-blue-600'
+                    : darkMode
+                      ? 'border-transparent text-gray-400 hover:text-gray-300 hover:border-gray-700'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                <Icon className={cn(
+                  "mr-2 h-5 w-5",
+                  activeSection === section.id
+                    ? darkMode ? 'text-blue-400' : 'text-blue-500'
+                    : darkMode ? 'text-gray-500' : 'text-gray-400'
+                )} />
+                {section.title}
+              </button>
             )
           })}
         </nav>
+      </div>
 
-          {/* External Links */}
-          <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800">
-            <div className={cn(
-              "text-xs font-semibold uppercase tracking-wider mb-3",
-              darkMode ? 'text-gray-500' : 'text-gray-400'
-            )}>
-              External Resources
-            </div>
-            <div className="space-y-2">
-            <a
-              href="https://github.com/forgeboard/forgeboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "flex items-center gap-2 text-sm hover:underline",
-                darkMode ? 'text-blue-400' : 'text-blue-600'
-              )}
-            >
-              <GitBranch className="h-4 w-4" />
-              GitHub Repository
-              <ExternalLink className="h-3 w-3" />
-            </a>
-            <a
-              href="https://flask.palletsprojects.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "flex items-center gap-2 text-sm hover:underline",
-                darkMode ? 'text-blue-400' : 'text-blue-600'
-              )}
-            >
-              <ExternalLink className="h-3 w-3" />
-              Flask Documentation
-            </a>
-          </div>
+      {/* Content Subsection Navigation */}
+      <div className="flex flex-wrap gap-2 pb-6">
+        {sections.find(s => s.id === activeSection)?.content.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveContent(item.id)}
+            className={cn(
+              "px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+              activeContent === item.id
+                ? darkMode
+                  ? 'bg-blue-900/20 text-blue-400 border border-blue-800/50'
+                  : 'bg-blue-50 text-blue-600 border border-blue-200'
+                : darkMode
+                  ? 'text-gray-400 hover:text-gray-300 hover:bg-gray-800'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+            )}
+          >
+            {item.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Content Area */}
+      <div className="prose prose-lg max-w-none">
+        <div className="mb-8">
+          <h2 className={cn(
+            "text-2xl font-bold mb-2",
+            darkMode ? 'text-gray-100' : 'text-gray-900'
+          )}>
+            {currentContent.title}
+          </h2>
+          <div className={cn(
+            "h-px bg-gradient-to-r",
+            darkMode 
+              ? 'from-gray-800 via-gray-700 to-transparent' 
+              : 'from-gray-200 via-gray-100 to-transparent'
+          )} />
         </div>
-      </aside>
+        
+        {renderMarkdown(currentContent.body)}
 
-        {/* Main Content */}
-        <main className="flex-1 min-w-0">
-          <div className="max-w-4xl">
-            {/* Content Header */}
-            <div className="mb-8">
-              <h2 className={cn(
-                "text-2xl font-bold mb-2",
-                darkMode ? 'text-gray-100' : 'text-gray-900'
-              )}>
-                {currentContent.title}
-              </h2>
-              <div className={cn(
-                "h-px bg-gradient-to-r",
-                darkMode 
-                  ? 'from-gray-800 via-gray-700 to-transparent' 
-                  : 'from-gray-200 via-gray-100 to-transparent'
-              )} />
-            </div>
-            
-            {/* Content Body */}
-            <div className="prose prose-lg max-w-none">
-              {renderMarkdown(currentContent.body)}
-            </div>
-
-            {/* Navigation Footer */}
-            <div className="mt-16 pt-8 flex items-center justify-between">
-              <Button
-                variant="ghost"
-                className={cn(
-                  "flex items-center gap-2",
-                  darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-                )}
-                disabled
-              >
-                <ChevronRight className="h-4 w-4 rotate-180" />
-                Previous
-              </Button>
-              <div className={cn(
-                "flex-1 mx-8 h-px",
-                darkMode ? 'bg-gray-800' : 'bg-gray-200'
-              )} />
-              <Button
-                variant="ghost"
-                className={cn(
-                  "flex items-center gap-2",
-                  darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
-                )}
-              >
-                Next
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </main>
+        {/* Navigation Footer */}
+        <div className="mt-16 pt-8 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex items-center gap-2",
+              darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+            )}
+            disabled={currentIndex === 0}
+            onClick={handlePrevious}
+          >
+            <ChevronRight className="h-4 w-4 rotate-180" />
+            Previous
+          </Button>
+          <div className={cn(
+            "flex-1 mx-8 h-px",
+            darkMode ? 'bg-gray-800' : 'bg-gray-200'
+          )} />
+          <Button
+            variant="ghost"
+            className={cn(
+              "flex items-center gap-2",
+              darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'
+            )}
+            disabled={currentIndex === allContentItems.length - 1}
+            onClick={handleNext}
+          >
+            Next
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   )

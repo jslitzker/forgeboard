@@ -54,7 +54,7 @@ const Sidebar = ({ darkMode, collapsed, setCollapsed, activeItem = 'dashboard', 
       <div className="flex flex-col h-full">
         {/* Sidebar Header */}
         <div className={cn(
-          "flex items-center justify-between h-16 px-4 border-b",
+          "flex items-center justify-between h-20 px-4 border-b",
           darkMode ? 'border-gray-800' : 'border-gray-200'
         )}>
           {!collapsed && (

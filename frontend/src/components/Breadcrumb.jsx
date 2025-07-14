@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 const Breadcrumb = ({ darkMode, items = [] }) => {
   // Always include home as the first item
   const breadcrumbItems = [
-    { label: 'Home', href: '#', icon: Home },
+    { label: 'Home', href: '#dashboard', icon: Home },
     ...items
   ]
 

@@ -177,11 +177,13 @@ function App() {
       {/* Header */}
       <header className={`border-b ${darkMode ? 'border-gray-800 bg-gradient-to-r from-gray-950 to-gray-900' : 'border-gray-200 bg-gradient-to-r from-white to-gray-50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+          <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white p-2.5 rounded-lg shadow-sm">
-                <Zap className="h-5 w-5" />
-              </div>
+              <img 
+                src={darkMode ? '/src/assets/images/forgeboard_logo_dark.png' : '/src/assets/images/forgeboard_logo.png'}
+                alt="ForgeBoard Logo"
+                className="h-16 w-16 object-contain"
+              />
               <div>
                 <h1 className={`text-2xl font-semibold ${darkMode ? 'text-gray-100' : 'text-gray-900'}`}>
                   ForgeBoard
