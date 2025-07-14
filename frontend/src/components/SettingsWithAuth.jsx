@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings, Users, Key, Shield, Bell, RefreshCw, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Key, Shield, Bell, RefreshCw, Save } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import UserManagement from './UserManagement';
@@ -12,7 +12,7 @@ const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
   const { isAuthenticated, isAdmin } = useAuth();
 
   const tabs = [
-    { id: 'general', label: 'General', icon: Settings },
+    { id: 'general', label: 'General', icon: SettingsIcon },
     ...(isAuthenticated() ? [
       { id: 'api-keys', label: 'API Keys', icon: Key },
     ] : []),

@@ -161,6 +161,11 @@ python backend/database/connection.py --backup
 forgeboard/
 ├── backend/           # Flask API server
 │   ├── main.py       # API endpoints and app logic
+│   ├── auth/         # Authentication system
+│   │   ├── providers/    # Authentication providers (local, Azure AD)
+│   │   ├── session_manager.py  # JWT session management
+│   │   ├── api_key_manager.py  # API key management
+│   │   └── email_service.py    # Email notifications
 │   ├── config/       # Configuration management
 │   │   ├── bootstrap.py  # Bootstrap configuration system
 │   │   └── manager.py    # Database configuration manager
@@ -171,7 +176,11 @@ forgeboard/
 │   ├── utils/        # Helper modules (YAML, NGINX, systemd)
 │   └── templates/    # Jinja2 templates for config generation
 ├── frontend/          # React dashboard
-│   ├── src/          # React components and UI logic
+│   ├── src/
+│   │   ├── contexts/     # React authentication context
+│   │   ├── components/   # React components and UI logic
+│   │   │   └── auth/     # Authentication components
+│   │   └── ...
 │   └── public/       # Static assets
 ├── scaffold/          # Cookiecutter templates
 │   ├── cookiecutter-flask/
@@ -201,6 +210,7 @@ sudo forgeboard-cli install --domain yourdomain.com
 
 ### API Endpoints
 
+#### App Management
 | Action          | Endpoint                        | Description                    |
 | --------------- | ------------------------------- | ------------------------------ |
 | Health check    | `GET /api/health`              | API health status              |
@@ -215,6 +225,22 @@ sudo forgeboard-cli install --domain yourdomain.com
 | Reload NGINX    | `POST /api/nginx/reload`       | Apply all NGINX changes        |
 | Update NGINX    | `POST /api/apps/:slug/nginx`   | Update single app NGINX config |
 | Check perms     | `GET /api/system/permissions`  | Verify system permissions      |
+
+#### Authentication
+| Action          | Endpoint                        | Description                    |
+| --------------- | ------------------------------- | ------------------------------ |
+| Login           | `POST /api/auth/login`         | Authenticate user with credentials |
+| Logout          | `POST /api/auth/logout`        | Logout and invalidate session |
+| Register        | `POST /api/auth/register`      | Create new user account       |
+| Current user    | `GET /api/auth/me`             | Get current user information  |
+| Forgot password | `POST /api/auth/forgot-password` | Request password reset email |
+| Reset password  | `POST /api/auth/reset-password` | Reset password with token    |
+| Change password | `POST /api/auth/change-password` | Change user password        |
+| List users      | `GET /api/users`               | List all users (admin only)  |
+| Create user     | `POST /api/users`              | Create user (admin only)     |
+| List API keys   | `GET /api/me/api-keys`         | List current user's API keys |
+| Create API key  | `POST /api/me/api-keys`        | Create new API key with permissions |
+| Revoke API key  | `DELETE /api/me/api-keys/:id`  | Revoke specific API key      |
 
 Full API documentation with interactive testing available at `/docs` when ForgeBoard is running.
 
@@ -232,7 +258,8 @@ Full API documentation with interactive testing available at `/docs` when ForgeB
 - ✅ **Phase 3**: App scaffolding with Flask/FastAPI templates
 - ✅ **Phase 4**: Real-time logs and auto-reload functionality
 - ✅ **Phase 5**: Installation tools and documentation
-- 🔜 **Next**: Multi-user support, Git-based deployment, SSL automation
+- ✅ **Phase 6**: Complete authentication system with local login, JWT sessions, API keys, and email notifications
+- 🔜 **Next**: Azure AD integration, Git-based deployment, SSL automation
 
 ## 🤝 Contributing
 
