@@ -54,10 +54,12 @@ class SchemaMigration(BaseModel):
     @classmethod
     def record_migration(cls, version: int, name: str, description: str = None):
         """Record a completed migration."""
+        from datetime import datetime
         migration = cls(
             version=version,
             name=name,
-            description=description
+            description=description,
+            applied_at=datetime.utcnow()
         )
         return migration.save()
     

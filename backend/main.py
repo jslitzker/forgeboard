@@ -739,7 +739,8 @@ def login():
             'username': auth_result.username,
             'email': auth_result.email,
             'display_name': auth_result.display_name,
-            'is_admin': auth_result.is_admin
+            'is_admin': auth_result.is_admin,
+            'password_change_required': auth_result.password_change_required
         }
     }), 200
 
@@ -1629,6 +1630,360 @@ def get_auth_stats():
     except Exception as e:
         current_app.logger.error(f"Auth stats error: {str(e)}")
         return jsonify({'error': 'Failed to get authentication statistics'}), 500
+
+
+# =============================================================================
+# SSL Certificate Management Endpoints
+# =============================================================================
+
+@app.route('/api/ssl/certificates', methods=['GET'])
+@auth_required
+@admin_required
+def list_ssl_certificates():
+    """
+    List all SSL certificates
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    responses:
+      200:
+        description: List of SSL certificates
+        schema:
+          type: object
+          properties:
+            certificates:
+              type: array
+              items:
+                type: object
+      403:
+        description: Admin access required
+    """
+    try:
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        certificates = ssl_manager.list_certificates()
+        return jsonify({'certificates': certificates}), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"SSL list error: {str(e)}")
+        return jsonify({'error': 'Failed to list SSL certificates'}), 500
+
+
+@app.route('/api/ssl/certificates/<domain>/status', methods=['GET'])
+@auth_required
+@admin_required
+def get_ssl_certificate_status(domain):
+    """
+    Get SSL certificate status for domain
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: domain
+        in: path
+        type: string
+        required: true
+        description: Domain name
+    responses:
+      200:
+        description: Certificate status
+      403:
+        description: Admin access required
+    """
+    try:
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        status = ssl_manager.get_certificate_status(domain)
+        return jsonify(status), 200
+        
+    except Exception as e:
+        current_app.logger.error(f"SSL status error: {str(e)}")
+        return jsonify({'error': 'Failed to get certificate status'}), 500
+
+
+@app.route('/api/ssl/csr/generate', methods=['POST'])
+@auth_required
+@admin_required
+def generate_csr():
+    """
+    Generate CSR for domain
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            domain:
+              type: string
+              description: Domain name
+            organization:
+              type: string
+              description: Organization name
+            country:
+              type: string
+              description: Country code (2 letters)
+            state:
+              type: string
+              description: State or province
+            city:
+              type: string
+              description: City or locality
+            email:
+              type: string
+              description: Email address
+    responses:
+      200:
+        description: CSR generated successfully
+      400:
+        description: Invalid request data
+      403:
+        description: Admin access required
+    """
+    try:
+        data = request.get_json()
+        if not data or 'domain' not in data:
+            return jsonify({'error': 'Domain is required'}), 400
+        
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        result = ssl_manager.generate_csr(
+            domain=data['domain'],
+            organization=data.get('organization', 'ForgeBoard'),
+            country=data.get('country', 'US'),
+            state=data.get('state', 'CA'),
+            city=data.get('city', 'San Francisco'),
+            email=data.get('email')
+        )
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"CSR generation error: {str(e)}")
+        return jsonify({'error': 'Failed to generate CSR'}), 500
+
+
+@app.route('/api/ssl/certificates/upload', methods=['POST'])
+@auth_required
+@admin_required
+def upload_ssl_certificate():
+    """
+    Upload SSL certificate
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            domain:
+              type: string
+              description: Domain name
+            certificate_pem:
+              type: string
+              description: Certificate in PEM format
+            chain_pem:
+              type: string
+              description: Certificate chain in PEM format
+    responses:
+      200:
+        description: Certificate uploaded successfully
+      400:
+        description: Invalid certificate data
+      403:
+        description: Admin access required
+    """
+    try:
+        data = request.get_json()
+        if not data or 'domain' not in data or 'certificate_pem' not in data:
+            return jsonify({'error': 'Domain and certificate_pem are required'}), 400
+        
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        result = ssl_manager.upload_certificate(
+            domain=data['domain'],
+            certificate_pem=data['certificate_pem'],
+            chain_pem=data.get('chain_pem')
+        )
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"Certificate upload error: {str(e)}")
+        return jsonify({'error': 'Failed to upload certificate'}), 500
+
+
+@app.route('/api/ssl/letsencrypt/configure', methods=['POST'])
+@auth_required
+@admin_required
+def configure_letsencrypt():
+    """
+    Configure Let's Encrypt with Cloudflare
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            domain:
+              type: string
+              description: Domain name
+            cloudflare_api_key:
+              type: string
+              description: Cloudflare API key
+            zone_id:
+              type: string
+              description: Cloudflare zone ID (optional)
+    responses:
+      200:
+        description: Let's Encrypt configured successfully
+      400:
+        description: Invalid configuration data
+      403:
+        description: Admin access required
+    """
+    try:
+        data = request.get_json()
+        if not data or 'domain' not in data or 'cloudflare_api_key' not in data:
+            return jsonify({'error': 'Domain and cloudflare_api_key are required'}), 400
+        
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        result = ssl_manager.configure_letsencrypt(
+            domain=data['domain'],
+            cloudflare_api_key=data['cloudflare_api_key'],
+            zone_id=data.get('zone_id')
+        )
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"Let's Encrypt configuration error: {str(e)}")
+        return jsonify({'error': 'Failed to configure Let\'s Encrypt'}), 500
+
+
+@app.route('/api/ssl/letsencrypt/request', methods=['POST'])
+@auth_required
+@admin_required
+def request_letsencrypt_certificate():
+    """
+    Request Let's Encrypt certificate
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: body
+        in: body
+        required: true
+        schema:
+          type: object
+          properties:
+            domain:
+              type: string
+              description: Domain name
+    responses:
+      200:
+        description: Certificate request initiated
+      400:
+        description: Invalid request data
+      403:
+        description: Admin access required
+    """
+    try:
+        data = request.get_json()
+        if not data or 'domain' not in data:
+            return jsonify({'error': 'Domain is required'}), 400
+        
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        result = ssl_manager.request_letsencrypt_certificate(data['domain'])
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+        
+    except Exception as e:
+        current_app.logger.error(f"Let's Encrypt request error: {str(e)}")
+        return jsonify({'error': 'Failed to request Let\'s Encrypt certificate'}), 500
+
+
+@app.route('/api/ssl/certificates/<domain>', methods=['DELETE'])
+@auth_required
+@admin_required
+def delete_ssl_certificate(domain):
+    """
+    Delete SSL certificate configuration
+    ---
+    tags:
+      - SSL Management
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: domain
+        in: path
+        type: string
+        required: true
+        description: Domain name
+    responses:
+      200:
+        description: Certificate deleted successfully
+      404:
+        description: Certificate not found
+      403:
+        description: Admin access required
+    """
+    try:
+        from ssl_management.manager import SSLManager
+        ssl_manager = SSLManager()
+        
+        result = ssl_manager.delete_certificate(domain)
+        
+        if result['success']:
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 404
+        
+    except Exception as e:
+        current_app.logger.error(f"SSL delete error: {str(e)}")
+        return jsonify({'error': 'Failed to delete certificate'}), 500
 
 
 if __name__ == '__main__':

@@ -42,6 +42,13 @@ class MigrationManager:
                 'up': self._migration_002_up,
                 'down': self._migration_002_down
             },
+            {
+                'version': 3,
+                'name': 'add_password_change_required',
+                'description': 'Add password_change_required field to users table',
+                'up': self._migration_003_up,
+                'down': self._migration_003_down
+            },
         ]
         
         for migration in migration_definitions:
@@ -171,6 +178,21 @@ class MigrationManager:
         """Migration 002 rollback: Remove performance indexes."""
         # Indexes would be dropped when tables are recreated
         pass
+    
+    def _migration_003_up(self):
+        """Migration 003: Add password_change_required field to users table."""
+        # Add the password_change_required column with default value False
+        from sqlalchemy import text
+        db.session.execute(text("""
+            ALTER TABLE users ADD COLUMN password_change_required BOOLEAN DEFAULT 0 NOT NULL
+        """))
+        db.session.commit()
+    
+    def _migration_003_down(self):
+        """Migration 003 rollback: Remove password_change_required field."""
+        # SQLite doesn't support DROP COLUMN, so we'd need to recreate the table
+        # For now, just note that this rollback is not implemented
+        raise NotImplementedError("SQLite doesn't support DROP COLUMN - migration rollback not implemented")
 
 
 # Global migration manager instance

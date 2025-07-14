@@ -26,6 +26,7 @@ class User(BaseModel):
     password_hash = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_admin = Column(Boolean, default=False, nullable=False)
+    password_change_required = Column(Boolean, default=False, nullable=False)
     last_login_at = Column(DateTime, nullable=True)
     failed_login_count = Column(Integer, default=0, nullable=False)
     locked_until = Column(DateTime, nullable=True)
@@ -147,6 +148,11 @@ class User(BaseModel):
         """Check if user has specific permission."""
         return permission in self.get_permissions()
     
+    def complete_password_change(self):
+        """Clear the password change requirement after user changes password."""
+        self.password_change_required = False
+        self.save()
+    
     def to_dict(self, include_sensitive=False):
         """Convert to dictionary."""
         result = super().to_dict()
@@ -165,14 +171,15 @@ class User(BaseModel):
         return result
     
     @classmethod
-    def create_local_user(cls, username: str, email: str, password: str, display_name: str = None, is_admin: bool = False):
+    def create_local_user(cls, username: str, email: str, password: str, display_name: str = None, is_admin: bool = False, require_password_change: bool = True):
         """Create a new local user."""
         user = cls(
             username=username,
             email=email,
             display_name=display_name or username,
             auth_provider='local',
-            is_admin=is_admin
+            is_admin=is_admin,
+            password_change_required=require_password_change
         )
         user.set_password(password)
         return user.save()

@@ -14,6 +14,7 @@ class AuthError(Enum):
     INVALID_CREDENTIALS = "invalid_credentials"
     ACCOUNT_LOCKED = "account_locked"
     ACCOUNT_DISABLED = "account_disabled"
+    PASSWORD_CHANGE_REQUIRED = "password_change_required"
     TOKEN_EXPIRED = "token_expired"
     TOKEN_INVALID = "token_invalid"
     RATE_LIMITED = "rate_limited"
@@ -29,6 +30,7 @@ class AuthResult:
     email: Optional[str] = None
     display_name: Optional[str] = None
     is_admin: bool = False
+    password_change_required: bool = False
     error: Optional[AuthError] = None
     error_message: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = None
@@ -36,6 +38,7 @@ class AuthResult:
     @classmethod
     def success_result(cls, user_id: int, username: str, email: str, 
                       display_name: str, is_admin: bool = False, 
+                      password_change_required: bool = False,
                       metadata: Optional[Dict[str, Any]] = None) -> 'AuthResult':
         """Create a successful authentication result."""
         return cls(
@@ -45,6 +48,7 @@ class AuthResult:
             email=email,
             display_name=display_name,
             is_admin=is_admin,
+            password_change_required=password_change_required,
             metadata=metadata or {}
         )
     
@@ -69,6 +73,7 @@ class AuthResult:
             'email': self.email,
             'display_name': self.display_name,
             'is_admin': self.is_admin,
+            'password_change_required': self.password_change_required,
             'metadata': self.metadata
         }
         

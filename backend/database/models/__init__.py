@@ -15,6 +15,7 @@ from .password_reset import PasswordReset
 from .audit_log import AuditLog
 from .azure_group_mapping import AzureGroupMapping
 from .schema_migration import SchemaMigration
+from .ssl_certificate import SSLCertificate
 
 __all__ = [
     # Base classes
@@ -41,4 +42,7 @@ __all__ = [
     
     # Migration models
     'SchemaMigration',
+    
+    # SSL certificate models
+    'SSLCertificate',
 ]

@@ -96,6 +96,7 @@ class LocalAuthProvider(AuthProvider):
             email=user.email,
             display_name=user.display_name,
             is_admin=user.is_admin,
+            password_change_required=user.password_change_required,
             metadata={
                 'auth_provider': 'local',
                 'last_login': user.last_login_at.isoformat() if user.last_login_at else None
@@ -171,12 +172,16 @@ class LocalAuthProvider(AuthProvider):
         # Set new password
         try:
             user.set_password(new_password)
+            # Clear password change requirement
+            user.complete_password_change()
+            
             return AuthResult.success_result(
                 user_id=user.id,
                 username=user.username,
                 email=user.email,
                 display_name=user.display_name,
                 is_admin=user.is_admin,
+                password_change_required=False,
                 metadata={'password_changed': True}
             )
         except Exception as e:
