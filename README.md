@@ -9,6 +9,8 @@
 
 Forgeboard is a self-hosted developer dashboard for managing multiple Python-based micro-apps—such as Flask, FastAPI, and Django—on a single Linux VM. It simplifies app deployment, routing, and lifecycle control using `systemd` and `NGINX`—no Docker, no Kubernetes, no nonsense.
 
+> **🔐 Authentication System**: Now includes secure multi-user authentication with local and Azure AD support, encrypted configuration storage, and comprehensive audit logging.
+
 ## ✨ Features
 
 ### Core Functionality
@@ -26,6 +28,14 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
 - **Built-in Documentation**: Comprehensive guides accessible within the dashboard
 - **CLI Tool**: Command-line interface for automation and scripting
 - **One-line Install**: Production deployment in minutes with `setup.sh`
+
+### Security & Authentication
+- **Multi-User Support**: Local authentication with password-based login
+- **Azure AD Integration**: Enterprise authentication with group-based roles
+- **Encrypted Configuration**: Sensitive settings stored encrypted in SQLite database
+- **API Key Management**: Secure API access with user-specific keys
+- **Audit Logging**: Comprehensive tracking of all user actions and system events
+- **Session Management**: Secure session handling with expiration and refresh
 
 ### Technical Benefits
 - **Zero Containers**: No Docker/Kubernetes complexity - just Python and systemd
@@ -47,7 +57,24 @@ Forgeboard is a self-hosted developer dashboard for managing multiple Python-bas
               │ systemd  │             │  NGINX   │
               │(Process) │             │(Routing) │
               └──────────┘             └──────────┘
+                                 │
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+              ┌──────────┐             ┌──────────┐
+              │ SQLite   │             │Bootstrap │
+              │Database  │             │Config    │
+              │(Users/   │             │(JSON)    │
+              │ Config)  │             │          │
+              └──────────┘             └──────────┘
 ```
+
+### Authentication Architecture
+- **Bootstrap Config**: Minimal JSON configuration for database and encryption keys
+- **SQLite Database**: Secure storage for users, sessions, configuration, and audit logs
+- **Encrypted Storage**: Sensitive configuration values encrypted at rest
+- **Local Auth**: Password-based authentication with bcrypt hashing
+- **Azure AD**: Enterprise authentication with MSAL integration
+- **Session Management**: JWT-based sessions with refresh token support
 
 ## 🚀 Quick Installation
 
@@ -77,10 +104,25 @@ The setup script will:
 ### Option 2: Development Setup
 
 ```bash
+# Clone and setup environment
+git clone https://github.com/jslitzker/forgeboard.git
+cd forgeboard
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and generate secure keys (see comments in file)
+
 # Backend
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+
+# Generate secure keys for development
+python config/bootstrap.py --generate-keys
+
+# Initialize database
+python -c "from database.connection import init_database; from flask import Flask; app = Flask(__name__); init_database(app)"
+
 python main.py  # runs on http://localhost:5000
 
 # Frontend (new terminal)
@@ -89,12 +131,39 @@ npm install
 npm run dev  # runs on http://localhost:5173
 ```
 
+### Configuration Management
+
+After installation, you can manage authentication and system configuration:
+
+```bash
+# Generate secure keys
+python backend/config/bootstrap.py --generate-keys
+
+# View current configuration
+python backend/config/manager.py --export
+
+# Configure authentication
+python backend/config/manager.py --set auth.enabled true
+python backend/config/manager.py --set auth.method local
+
+# Database operations
+python backend/database/connection.py --health
+python backend/database/connection.py --backup
+```
+
 ## 📁 Repo Structure
 
 ```
 forgeboard/
 ├── backend/           # Flask API server
 │   ├── main.py       # API endpoints and app logic
+│   ├── config/       # Configuration management
+│   │   ├── bootstrap.py  # Bootstrap configuration system
+│   │   └── manager.py    # Database configuration manager
+│   ├── database/     # Database models and management
+│   │   ├── connection.py # Database connection and initialization
+│   │   ├── models/       # SQLAlchemy models
+│   │   └── migrations/   # Database migration management
 │   ├── utils/        # Helper modules (YAML, NGINX, systemd)
 │   └── templates/    # Jinja2 templates for config generation
 ├── frontend/          # React dashboard
@@ -103,9 +172,12 @@ forgeboard/
 ├── scaffold/          # Cookiecutter templates
 │   ├── cookiecutter-flask/
 │   └── cookiecutter-fastapi/
+├── config/           # Configuration files
+│   └── bootstrap.json   # Bootstrap configuration
 ├── docs/             # Project documentation
 ├── forgeboard-cli    # CLI management tool
 ├── setup.sh          # One-line installation script
+├── .env.example      # Environment variables template
 └── apps.yml          # App registry (created on first run)
 ```
 

@@ -13,9 +13,21 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from utils.yaml_loader import AppsConfig
 from utils.nginx_gen import NginxConfigGenerator
 from utils.systemd_control import SystemdController
+from config.bootstrap import initialize_bootstrap_config, get_bootstrap_config
+from database.connection import init_database
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize bootstrap configuration
+initialize_bootstrap_config()
+bootstrap_config = get_bootstrap_config()
+
+# Set Flask secret key from bootstrap config
+app.config['SECRET_KEY'] = bootstrap_config.get_app_secret_key()
+
+# Initialize database
+init_database(app)
 
 # Configure Swagger
 swagger_config = {

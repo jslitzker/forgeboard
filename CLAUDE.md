@@ -10,6 +10,8 @@ ForgeBoard is a Flask-based app management dashboard for deploying Python micro-
 
 **Backend**: Flask API managing apps via YAML config, systemd services, and NGINX routing
 **Frontend**: React + Vite + Tailwind CSS + ShadCN UI dashboard
+**Database**: SQLite for user authentication and configuration management
+**Authentication**: Local + Azure AD authentication with encrypted configuration storage
 **Infrastructure**: Ubuntu 22.04, systemd for process management, NGINX for reverse proxy
 **No containers** - direct VM deployment by design
 
@@ -20,6 +22,14 @@ ForgeBoard is a Flask-based app management dashboard for deploying Python micro-
 cd backend
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+
+# Set up environment variables
+cp ../.env.example ../.env
+# Edit .env and generate secure keys (see .env.example for instructions)
+
+# Initialize database (first time setup)
+python -c "from database.connection import init_database; from flask import Flask; app = Flask(__name__); init_database(app)"
+
 python main.py  # runs Flask API on port 5000
 ```
 
@@ -47,11 +57,20 @@ forgeboard-cli status
 
 # View API docs
 # Navigate to http://localhost:5000/docs
+
+# Database and configuration management
+python backend/database/connection.py --health  # Check database health
+python backend/config/manager.py --export      # Export configuration
+python backend/config/bootstrap.py --generate-keys  # Generate secure keys
 ```
 
 ## Key API Endpoints
 
+### System & Health
 - `GET /api/health` - Health check endpoint
+- `GET /api/system/permissions` - Check system permissions
+
+### App Management
 - `GET /api/apps` - List all apps from apps.yml
 - `GET /api/apps/:slug` - Get specific app details
 - `POST /api/apps/create` - Create new app from template
@@ -60,14 +79,28 @@ forgeboard-cli status
 - `POST /api/apps/:slug/start` - Start app via systemd
 - `POST /api/apps/:slug/stop` - Stop app via systemd
 - `GET /api/apps/:slug/logs` - Fetch app logs (with line count param)
+
+### Infrastructure
 - `POST /api/nginx/reload` - Reload all NGINX configurations
 - `POST /api/apps/:slug/nginx` - Update single app NGINX config
-- `GET /api/system/permissions` - Check system permissions
+
+### Authentication (Future Implementation)
+- `GET /api/auth/method` - Get current auth method and configuration
+- `POST /api/auth/login` - Unified login endpoint
+- `POST /api/auth/logout` - Unified logout
+- `GET /api/auth/me` - Get current user info
+- `GET /api/users` - List all users (admin only)
+- `POST /api/users` - Create user (admin only)
+- `GET /api/me/api-keys` - List current user's API keys
+- `POST /api/me/api-keys` - Create new API key
 
 ## Important Files
 
 ### Configuration
 - `backend/apps.yml` - Central app registry (stores app metadata, ports, domains)
+- `config/bootstrap.json` - Bootstrap configuration (database path, encryption keys)
+- `/opt/forgeboard/data/forgeboard.db` - SQLite database (user data, sessions, config)
+- `.env` - Environment variables (copy from .env.example)
 - `/etc/nginx/sites-available/forgeboard-*` - Generated NGINX configs for each app
 - `/etc/systemd/system/forgeboard-*.service` - Generated systemd service files
 
@@ -77,6 +110,13 @@ forgeboard-cli status
 - `backend/utils/nginx_gen.py` - NGINX config generation
 - `backend/utils/systemd_control.py` - systemd service management
 - `backend/templates/` - Jinja2 templates for config generation
+
+### Authentication & Database
+- `backend/config/bootstrap.py` - Bootstrap configuration system
+- `backend/config/manager.py` - Database configuration manager with encryption
+- `backend/database/connection.py` - Database connection and initialization
+- `backend/database/models/` - SQLAlchemy models for all data structures
+- `backend/database/migrations/` - Database migration management
 
 ### Frontend
 - `frontend/src/App.jsx` - Main React component with routing
@@ -99,6 +139,12 @@ The React dashboard uses hash-based routing with these main sections:
 - `#settings` - User preferences and system configuration
 - `#docs` - Built-in documentation with search
 
+### Authentication UI (Future Implementation)
+- `#login` - Login page supporting local and Azure AD authentication
+- `#users` - User management interface (admin only)
+- `#profile` - User profile and API key management
+- `#admin` - System configuration and authentication settings
+
 ## Design Principles
 
 1. **No overengineering** - Direct systemd/NGINX management instead of containers
@@ -106,6 +152,7 @@ The React dashboard uses hash-based routing with these main sections:
 3. **Modularity** - Apps are independent with isolated virtualenvs
 4. **Developer-first** - CLI tools, API docs, and clear error messages
 5. **Production-ready** - Proper logging, error handling, and security
+6. **Security-first** - Encrypted configuration storage, secure authentication, audit logging
 
 ## Development Workflow
 
@@ -123,5 +170,16 @@ ForgeBoard is feature-complete for MVP with all core functionality implemented:
 - ✅ Real-time log viewer
 - ✅ Automated installation tools
 - ✅ Comprehensive documentation
+- ✅ Authentication system database foundation (Phase 1 complete)
 
-Next phase focuses on multi-user support, Git deployment, and enterprise features.
+### Authentication Implementation Progress
+- ✅ **Phase 1: Database Foundation** - SQLite database with encrypted configuration
+- ⏳ **Phase 2: Local Authentication** - Password-based authentication system
+- 📅 **Phase 3: Configuration UI** - Web interface for system configuration
+- 📅 **Phase 4: Authentication API** - REST API for user management
+- 📅 **Phase 5: Frontend Authentication** - Login UI and protected routes
+- 📅 **Phase 6: Azure AD Integration** - Enterprise authentication
+- 📅 **Phase 7: Security & Testing** - Comprehensive security hardening
+- 📅 **Phase 8: CLI Integration** - Command-line authentication tools
+
+Next phase focuses on implementing local authentication, then Azure AD integration and enterprise features.

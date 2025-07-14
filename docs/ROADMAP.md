@@ -5,29 +5,61 @@ ForgeBoard: The simplest way to deploy Python apps on a single server, without c
 
 ## 🚀 Release Schedule
 
-### v1.1 - Security Update (February 2025)
-**Theme**: Make ForgeBoard secure for team use
-**Duration**: 2 weeks
+### v1.1 - Authentication Foundation ✅ COMPLETED (January 2025)
+**Theme**: Database foundation for multi-user authentication
+**Duration**: 1 week
+
+#### Core Features ✅
+- [x] **Database Infrastructure**
+  - SQLite database with comprehensive schema
+  - User models (local and Azure AD support)
+  - Session and API key management
+  - Encrypted configuration storage
+- [x] **Configuration Management**
+  - Database-stored configuration with encryption
+  - Bootstrap configuration system
+  - CLI tools for configuration management
+  - Database migration system
+
+#### Technical Tasks ✅
+- [x] Add SQLAlchemy ORM
+- [x] Create authentication models
+- [x] Build configuration encryption
+- [x] Add database migration system
+
+---
+
+### v1.2 - Authentication Implementation (February 2025)
+**Theme**: Complete authentication system with UI
+**Duration**: 3 weeks
 
 #### Core Features
-- [ ] **JWT Authentication**
-  - Login/logout functionality
-  - Session management
-  - API key support for automation
-- [ ] **User Management**
-  - Basic user CRUD
+- [ ] **Local Authentication**
+  - Password-based login system
+  - Session management with JWT
+  - API key authentication
   - Password reset flow
-  - User preferences storage
+- [ ] **Azure AD Integration**
+  - MSAL authentication
+  - Group-based role mapping
+  - User synchronization
+  - SSO flow
+- [ ] **Authentication UI**
+  - Login/logout interface
+  - User management dashboard
+  - Profile and API key management
+  - Admin configuration interface
 
 #### Technical Tasks
-- Add Flask-JWT-Extended
-- Create auth middleware
-- Build login UI component
+- Implement authentication providers
+- Create authentication middleware
+- Build login UI components
+- Add user management API
 - Secure all API endpoints
 
 ---
 
-### v1.2 - Developer Experience (March 2025)
+### v1.3 - Developer Experience (March 2025)
 **Theme**: Streamline app configuration and deployment
 **Duration**: 3 weeks
 
@@ -135,10 +167,11 @@ ForgeBoard: The simplest way to deploy Python apps on a single server, without c
 
 ### Near Term (Q1 2025)
 **Focus**: Security & Core Features
-1. Basic authentication (Critical)
-2. Environment variables (High)
-3. SSL support (High)
-4. Import tool (Medium)
+1. ✅ Authentication foundation (Critical - COMPLETED)
+2. Authentication implementation (Critical - IN PROGRESS)
+3. Environment variables (High)
+4. SSL support (High)
+5. Import tool (Medium)
 
 ### Mid Term (Q2-Q3 2025)
 **Focus**: Developer Productivity
