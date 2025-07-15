@@ -64,6 +64,8 @@ const Documentation = ({ darkMode }) => {
       content: [
         { title: 'NGINX Configuration', id: 'nginx' },
         { title: 'Systemd Services', id: 'systemd' },
+        { title: 'Email Configuration', id: 'email-config' },
+        { title: 'SSL Certificates', id: 'ssl-config' },
         { title: 'Security Best Practices', id: 'security' },
         { title: 'Backup & Recovery', id: 'backup' }
       ]
@@ -2431,6 +2433,521 @@ echo "Verification complete"
    - Alert on backup failures
    - Track backup sizes
    - Monitor storage usage
+        `
+      },
+      'email-config': {
+        title: 'Email Configuration',
+        body: `
+## Email Configuration Guide
+
+ForgeBoard supports email notifications for password resets and user management through both SMTP and Microsoft 365 OAuth2.
+
+### SMTP Configuration
+
+#### Gmail Setup
+1. **Enable 2-Factor Authentication** in your Google Account
+2. **Generate App Password**:
+   - Go to Google Account settings → Security
+   - Select "2-Step Verification"
+   - Select "App passwords"
+   - Generate password for "Mail"
+3. **Configure ForgeBoard**:
+   - Host: \`smtp.gmail.com\`
+   - Port: \`587\`
+   - Username: Your Gmail address
+   - Password: Generated app password
+   - Enable TLS: ✓
+
+#### Other SMTP Providers
+
+**Outlook/Hotmail**:
+\`\`\`
+Host: smtp.live.com
+Port: 587
+TLS: Enabled
+\`\`\`
+
+**Yahoo Mail**:
+\`\`\`
+Host: smtp.mail.yahoo.com
+Port: 587 or 465
+TLS/SSL: Enabled
+\`\`\`
+
+**Custom SMTP**:
+\`\`\`
+Host: your-smtp-server.com
+Port: 587 (TLS) or 465 (SSL)
+Username: your-email@domain.com
+Password: your-password
+\`\`\`
+
+### Microsoft 365 OAuth2 Setup
+
+For enterprise environments using Microsoft 365, OAuth2 provides secure authentication without storing passwords.
+
+#### Step 1: Register Application in Azure AD
+
+1. **Access Azure Portal**:
+   - Go to [Azure Portal](https://portal.azure.com)
+   - Navigate to "Azure Active Directory"
+
+2. **Register New Application**:
+   - Go to "App registrations" → "New registration"
+   - **Name**: "ForgeBoard Email Service"
+   - **Account types**: "Accounts in this organizational directory only"
+   - **Redirect URI**: Leave blank (not needed for service-to-service)
+   - Click "Register"
+
+3. **Note Application Details**:
+   - Copy **Application (client) ID**
+   - Copy **Directory (tenant) ID**
+
+#### Step 2: Configure API Permissions
+
+1. **Add Mail Permissions**:
+   - Go to "API permissions" → "Add a permission"
+   - Select "Microsoft Graph" → "Application permissions"
+   - Add: \`Mail.Send\`
+   - Click "Grant admin consent"
+
+2. **Verify Permissions**:
+   - Ensure \`Mail.Send\` shows "Granted" status
+   - Admin consent should be green checkmark
+
+#### Step 3: Create Client Secret
+
+1. **Generate Secret**:
+   - Go to "Certificates & secrets" → "New client secret"
+   - **Description**: "ForgeBoard Email Secret"
+   - **Expires**: Choose appropriate duration (24 months recommended)
+   - Click "Add"
+
+2. **Copy Secret Value**:
+   - **Important**: Copy the secret value immediately
+   - This is the only time you'll see the full secret
+   - Store securely - you'll need this for ForgeBoard
+
+#### Step 4: Configure ForgeBoard
+
+1. **Navigate to Email Settings**:
+   - ForgeBoard Dashboard → Settings → Email (Admin only)
+   - Select "Microsoft 365" provider
+
+2. **Enter Configuration**:
+   - **Tenant ID**: Directory (tenant) ID from Step 1
+   - **Client ID**: Application (client) ID from Step 1
+   - **Client Secret**: Secret value from Step 3
+   - **Scope**: \`https://graph.microsoft.com/.default\` (default)
+
+3. **Configure Sender**:
+   - **From Email**: Service account email (e.g., \`noreply@yourdomain.com\`)
+   - **From Name**: "ForgeBoard" or your organization name
+
+#### Step 5: Test Configuration
+
+1. **Test Email**:
+   - Click "Test Email" in ForgeBoard settings
+   - Check admin email inbox for test message
+   - Verify logs for any errors
+
+#### Troubleshooting OAuth2
+
+**Common Issues**:
+
+1. **"Insufficient privileges" Error**:
+   - Ensure \`Mail.Send\` permission is added
+   - Verify admin consent is granted
+   - Check application permissions in Azure AD
+
+2. **"Invalid client" Error**:
+   - Verify Tenant ID and Client ID are correct
+   - Ensure application is in correct directory
+
+3. **"Invalid client secret" Error**:
+   - Secret may have expired - generate new one
+   - Ensure secret value copied correctly (no extra spaces)
+
+4. **"Insufficient scope" Error**:
+   - Verify scope is \`https://graph.microsoft.com/.default\`
+   - Check API permissions are configured correctly
+
+### Email Templates
+
+ForgeBoard includes built-in email templates:
+
+#### Password Reset Email
+- **Subject**: "Password Reset Request - ForgeBoard"
+- **Content**: Secure reset link with 60-minute expiration
+- **HTML + Text**: Responsive design with ForgeBoard branding
+
+#### Welcome Email
+- **Subject**: "Welcome to ForgeBoard"
+- **Content**: Account confirmation and getting started info
+- **Customizable**: From name and organization details
+
+### Security Considerations
+
+1. **SMTP Security**:
+   - Always use TLS/SSL encryption
+   - Use app-specific passwords when available
+   - Rotate passwords regularly
+
+2. **OAuth2 Security**:
+   - Limit client secret expiration (24 months max)
+   - Use least-privilege permissions
+   - Monitor application access logs
+
+3. **General Best Practices**:
+   - Test email configuration regularly
+   - Monitor email delivery logs
+   - Set up monitoring for failed sends
+   - Use dedicated service accounts
+        `
+      },
+      'ssl-config': {
+        title: 'SSL Certificates',
+        body: `
+## SSL Certificate Configuration
+
+ForgeBoard supports multiple SSL certificate management options for securing your applications with HTTPS.
+
+### Local Certificate Signing Request (CSR) Generation
+
+Generate and manage SSL certificates locally for internal or development use.
+
+#### Step 1: Generate Private Key and CSR
+
+\`\`\`bash
+# Create directory for certificates
+sudo mkdir -p /etc/ssl/forgeboard
+cd /etc/ssl/forgeboard
+
+# Generate private key (4096-bit RSA)
+sudo openssl genrsa -out domain.key 4096
+
+# Generate Certificate Signing Request (CSR)
+sudo openssl req -new -key domain.key -out domain.csr
+
+# You'll be prompted for certificate details:
+# Country Name: US
+# State: Your State
+# City: Your City  
+# Organization: Your Organization
+# Organizational Unit: IT Department
+# Common Name: yourdomain.com (IMPORTANT: Must match your domain)
+# Email: admin@yourdomain.com
+# Challenge password: (leave blank)
+# Optional company name: (leave blank)
+\`\`\`
+
+#### Step 2: Self-Signed Certificate (Development)
+
+\`\`\`bash
+# Generate self-signed certificate (valid for 365 days)
+sudo openssl x509 -req -days 365 -in domain.csr -signkey domain.key -out domain.crt
+
+# Create combined certificate file
+sudo cat domain.crt > domain-fullchain.crt
+
+# Set appropriate permissions
+sudo chmod 600 domain.key
+sudo chmod 644 domain.crt domain-fullchain.crt
+sudo chown root:root domain.*
+\`\`\`
+
+#### Step 3: Commercial Certificate Authority
+
+1. **Submit CSR to CA**:
+   - Purchase SSL certificate from trusted CA (DigiCert, Sectigo, etc.)
+   - Submit the \`domain.csr\` file during certificate request
+   - Complete domain validation process
+
+2. **Install CA Certificate**:
+   \`\`\`bash
+   # Download certificate files from CA:
+   # - domain.crt (your certificate)
+   # - intermediate.crt (intermediate certificate)
+   # - root.crt (root certificate - optional)
+
+   # Create full certificate chain
+   sudo cat domain.crt intermediate.crt > domain-fullchain.crt
+   \`\`\`
+
+#### Step 4: Configure ForgeBoard
+
+1. **Add Certificate to ForgeBoard**:
+   - Navigate to Settings → SSL Certificates (Admin only)
+   - Upload certificate files:
+     - **Private Key**: \`domain.key\`
+     - **Certificate**: \`domain-fullchain.crt\`
+     - **Domain**: \`yourdomain.com\`
+
+### Let's Encrypt with Cloudflare DNS Challenge
+
+Automate SSL certificate management using Let's Encrypt and Cloudflare DNS validation.
+
+#### Prerequisites
+
+1. **Domain managed by Cloudflare**:
+   - Add domain to Cloudflare
+   - Update nameservers at domain registrar
+   - Verify DNS is working through Cloudflare
+
+2. **Cloudflare API Token**:
+   - Go to [Cloudflare Dashboard](https://dash.cloudflare.com/profile/api-tokens)
+   - Create Token → Custom token
+   - **Permissions**:
+     - Zone:Zone:Read
+     - Zone:DNS:Edit
+   - **Zone Resources**: Include → Specific zone → yourdomain.com
+   - Copy token securely
+
+#### Step 1: Install Certbot and Cloudflare Plugin
+
+\`\`\`bash
+# Install certbot and cloudflare plugin
+sudo apt update
+sudo apt install -y certbot python3-certbot-dns-cloudflare
+
+# For older Ubuntu versions, use snap:
+# sudo snap install certbot --classic
+# sudo snap install certbot-dns-cloudflare
+\`\`\`
+
+#### Step 2: Configure Cloudflare Credentials
+
+\`\`\`bash
+# Create credentials file
+sudo mkdir -p /etc/letsencrypt
+sudo nano /etc/letsencrypt/cloudflare.ini
+
+# Add your Cloudflare API token:
+dns_cloudflare_api_token = your_cloudflare_api_token_here
+
+# Or use Global API Key (less secure):
+# dns_cloudflare_email = your-email@domain.com
+# dns_cloudflare_api_key = your_global_api_key
+
+# Set secure permissions
+sudo chmod 600 /etc/letsencrypt/cloudflare.ini
+\`\`\`
+
+#### Step 3: Generate Let's Encrypt Certificate
+
+\`\`\`bash
+# Generate certificate using DNS challenge
+sudo certbot certonly \\
+  --dns-cloudflare \\
+  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \\
+  --dns-cloudflare-propagation-seconds 20 \\
+  -d yourdomain.com \\
+  -d *.yourdomain.com \\
+  --agree-tos \\
+  --email admin@yourdomain.com \\
+  --non-interactive
+
+# Certificate files will be created at:
+# /etc/letsencrypt/live/yourdomain.com/privkey.pem
+# /etc/letsencrypt/live/yourdomain.com/fullchain.pem
+\`\`\`
+
+#### Step 4: Configure Auto-Renewal
+
+\`\`\`bash
+# Test renewal process
+sudo certbot renew --dry-run
+
+# Create renewal hook for ForgeBoard
+sudo nano /etc/letsencrypt/renewal-hooks/deploy/forgeboard-reload.sh
+
+# Add the following script:
+#!/bin/bash
+# Reload ForgeBoard SSL configurations after certificate renewal
+
+# Restart NGINX to load new certificates
+systemctl reload nginx
+
+# Optional: Notify ForgeBoard of certificate update
+curl -X POST http://localhost:5000/api/admin/ssl/reload \\
+  -H "Authorization: Bearer \$FORGEBOARD_API_KEY" \\
+  -H "Content-Type: application/json"
+
+# Log renewal
+echo "$(date): SSL certificates renewed for ForgeBoard" >> /var/log/forgeboard-ssl.log
+
+# Make script executable
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/forgeboard-reload.sh
+
+# Certbot auto-renewal is typically set up via cron or systemd timer
+# Verify with: sudo systemctl status certbot.timer
+\`\`\`
+
+#### Step 5: Configure ForgeBoard for Let's Encrypt
+
+1. **Add Certificate Path to ForgeBoard**:
+   - Settings → SSL Certificates → Add Certificate
+   - **Type**: Let's Encrypt
+   - **Domain**: \`yourdomain.com\`
+   - **Private Key Path**: \`/etc/letsencrypt/live/yourdomain.com/privkey.pem\`
+   - **Certificate Path**: \`/etc/letsencrypt/live/yourdomain.com/fullchain.pem\`
+   - **Auto-Renewal**: Enabled
+
+#### Advanced Configuration
+
+**Multiple Domains**:
+\`\`\`bash
+# Certificate for multiple domains
+sudo certbot certonly \\
+  --dns-cloudflare \\
+  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \\
+  -d domain1.com -d www.domain1.com \\
+  -d domain2.com -d www.domain2.com \\
+  -d *.domain1.com
+\`\`\`
+
+**Custom Challenge Settings**:
+\`\`\`bash
+# Longer propagation time for slower DNS
+sudo certbot certonly \\
+  --dns-cloudflare \\
+  --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini \\
+  --dns-cloudflare-propagation-seconds 60 \\
+  -d yourdomain.com
+\`\`\`
+
+### SSL Configuration Best Practices
+
+#### NGINX SSL Configuration
+
+ForgeBoard automatically generates secure NGINX configurations:
+
+\`\`\`nginx
+server {
+    listen 443 ssl http2;
+    server_name yourdomain.com;
+
+    # SSL Certificate Configuration
+    ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
+
+    # Strong SSL Configuration
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+    ssl_prefer_server_ciphers off;
+    
+    # OCSP Stapling
+    ssl_stapling on;
+    ssl_stapling_verify on;
+    ssl_trusted_certificate /etc/letsencrypt/live/yourdomain.com/chain.pem;
+    
+    # Security Headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options DENY always;
+    add_header X-Content-Type-Options nosniff always;
+    
+    # Application proxy
+    location / {
+        proxy_pass http://127.0.0.1:5001;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+
+# HTTP to HTTPS redirect
+server {
+    listen 80;
+    server_name yourdomain.com;
+    return 301 https://\$server_name\$request_uri;
+}
+\`\`\`
+
+#### Certificate Monitoring
+
+**Set up monitoring**:
+\`\`\`bash
+# Check certificate expiry
+sudo certbot certificates
+
+# Create monitoring script
+sudo nano /usr/local/bin/check-ssl-expiry.sh
+
+#!/bin/bash
+# Check SSL certificate expiry for ForgeBoard domains
+
+DOMAINS=("yourdomain.com" "api.yourdomain.com")
+ALERT_DAYS=30
+
+for domain in "\${DOMAINS[@]}"; do
+    expiry=$(echo | openssl s_client -servername \$domain -connect \$domain:443 2>/dev/null | \\
+             openssl x509 -noout -enddate | cut -d= -f2)
+    expiry_epoch=$(date -d "\$expiry" +%s)
+    current_epoch=$(date +%s)
+    days_until_expiry=$(( (expiry_epoch - current_epoch) / 86400 ))
+    
+    if [ \$days_until_expiry -lt \$ALERT_DAYS ]; then
+        echo "WARNING: \$domain certificate expires in \$days_until_expiry days"
+        # Send notification (email, webhook, etc.)
+    else
+        echo "OK: \$domain certificate expires in \$days_until_expiry days"
+    fi
+done
+
+# Make executable and add to cron
+sudo chmod +x /usr/local/bin/check-ssl-expiry.sh
+echo "0 6 * * * /usr/local/bin/check-ssl-expiry.sh" | sudo crontab -
+\`\`\`
+
+### Troubleshooting SSL Issues
+
+#### Common Problems
+
+1. **Certificate Not Trusted**:
+   \`\`\`bash
+   # Check certificate chain
+   openssl s_client -connect yourdomain.com:443 -servername yourdomain.com
+   
+   # Verify certificate files
+   openssl x509 -in /path/to/certificate.crt -text -noout
+   \`\`\`
+
+2. **Let's Encrypt Rate Limits**:
+   - Let's Encrypt has rate limits (50 certificates per domain per week)
+   - Use staging environment for testing: \`--test-cert\`
+   - Check rate limits: [Let's Encrypt Rate Limits](https://letsencrypt.org/docs/rate-limits/)
+
+3. **Cloudflare DNS Issues**:
+   \`\`\`bash
+   # Test DNS propagation
+   dig TXT _acme-challenge.yourdomain.com
+   
+   # Check Cloudflare API access
+   curl -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \\
+        -H "Authorization: Bearer your_api_token"
+   \`\`\`
+
+4. **Permission Issues**:
+   \`\`\`bash
+   # Fix certificate permissions
+   sudo chmod 600 /etc/letsencrypt/live/*/privkey.pem
+   sudo chmod 644 /etc/letsencrypt/live/*/fullchain.pem
+   sudo chown root:root /etc/letsencrypt/live/*/
+   \`\`\`
+
+#### SSL Testing Tools
+
+- **SSL Labs Test**: https://www.ssllabs.com/ssltest/
+- **Certificate Transparency**: https://crt.sh/
+- **Local Testing**:
+  \`\`\`bash
+  # Test SSL configuration
+  openssl s_client -connect yourdomain.com:443 -servername yourdomain.com
+  
+  # Check certificate chain
+  curl -vI https://yourdomain.com
+  \`\`\`
         `
       },
       'common-issues': {

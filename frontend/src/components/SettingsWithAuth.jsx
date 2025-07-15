@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { Settings as SettingsIcon, Users, Key, Shield, Bell, RefreshCw, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Users, Key, Shield, Mail, RefreshCw, Save } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
 import UserManagement from './UserManagement';
 import ApiKeyManagement from './ApiKeyManagement';
 import SSLManagement from './SSLManagement';
+import EmailSettings from './EmailSettings';
 import Settings from './Settings';
 
 const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
@@ -19,6 +20,7 @@ const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
     ] : []),
     ...(isAdmin() ? [
       { id: 'users', label: 'Users', icon: Users },
+      { id: 'email', label: 'Email', icon: Mail },
       { id: 'ssl', label: 'SSL Certificates', icon: Shield },
     ] : []),
   ];
@@ -73,6 +75,10 @@ const SettingsWithAuth = ({ darkMode, setDarkMode }) => {
         
         {activeTab === 'users' && isAdmin() && (
           <UserManagement darkMode={darkMode} />
+        )}
+        
+        {activeTab === 'email' && isAdmin() && (
+          <EmailSettings darkMode={darkMode} />
         )}
         
         {activeTab === 'ssl' && isAdmin() && (

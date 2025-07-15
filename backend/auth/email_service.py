@@ -188,8 +188,16 @@ class OAuth2EmailProvider(EmailProvider):
                 'Content-Type': 'application/json'
             }
             
+            # For application permissions, we need to send on behalf of a specific user
+            # The from_email must be a valid mailbox in the tenant
             url = f'{self.graph_api_url}/users/{self.from_email}/sendMail'
             response = requests.post(url, json=email_data, headers=headers)
+            
+            # Log the response for debugging
+            current_app.logger.info(f"Graph API Response Status: {response.status_code}")
+            if response.status_code != 202:  # sendMail returns 202 on success
+                current_app.logger.error(f"Graph API Error: {response.text}")
+            
             response.raise_for_status()
             
             return True
@@ -337,7 +345,7 @@ ForgeBoard Team
     def _get_provider(self) -> Optional[EmailProvider]:
         """Get configured email provider."""
         try:
-            email_config = self.config_manager.get_config('email')
+            email_config = self.config_manager.get_category('email')
             if not email_config or not email_config.get('enabled'):
                 return None
             
@@ -410,7 +418,7 @@ ForgeBoard Team
     def is_enabled(self) -> bool:
         """Check if email is enabled."""
         try:
-            email_config = self.config_manager.get_config('email')
+            email_config = self.config_manager.get_category('email')
             return email_config and email_config.get('enabled', False)
         except:
             return False
@@ -418,7 +426,7 @@ ForgeBoard Team
     def get_configuration(self) -> Dict[str, Any]:
         """Get email configuration (sanitized)."""
         try:
-            email_config = self.config_manager.get_config('email')
+            email_config = self.config_manager.get_category('email')
             if not email_config:
                 return {'enabled': False}
             
@@ -434,8 +442,24 @@ ForgeBoard Team
                 sanitized.update({
                     'smtp_host': email_config.get('smtp_host'),
                     'smtp_port': email_config.get('smtp_port', 587),
+                    'smtp_username': email_config.get('smtp_username'),
+                    'smtp_password': 'REDACTED' if email_config.get('smtp_password') else '',
                     'smtp_use_tls': email_config.get('smtp_use_tls', True),
                     'smtp_use_ssl': email_config.get('smtp_use_ssl', False)
+                })
+            elif email_config.get('provider') == 'oauth2':
+                sanitized.update({
+                    'tenant_id': email_config.get('tenant_id'),
+                    'client_id': email_config.get('client_id'),
+                    'client_secret': 'REDACTED' if email_config.get('client_secret') else '',
+                    'scope': email_config.get('scope', 'https://graph.microsoft.com/.default'),
+                    # Include empty SMTP fields for frontend compatibility
+                    'smtp_host': '',
+                    'smtp_port': 587,
+                    'smtp_username': '',
+                    'smtp_password': '',
+                    'smtp_use_tls': True,
+                    'smtp_use_ssl': False
                 })
             
             return sanitized
@@ -447,7 +471,25 @@ ForgeBoard Team
     def update_configuration(self, config: Dict[str, Any]) -> bool:
         """Update email configuration."""
         try:
-            return self.config_manager.set_config('email', config)
+            # Get existing configuration to preserve encrypted values
+            existing_config = self.config_manager.get_category('email')
+            
+            # Merge with new config, preserving existing encrypted values for empty/redacted fields
+            merged_config = config.copy()
+            
+            # Preserve existing encrypted values if new value is empty or "REDACTED"
+            sensitive_fields = ['smtp_password', 'client_secret', 'tenant_id', 'client_id']
+            if existing_config:
+                for field in sensitive_fields:
+                    new_value = merged_config.get(field, '')
+                    if not new_value or new_value == 'REDACTED':
+                        existing_value = existing_config.get(field, '')
+                        if existing_value:
+                            merged_config[field] = existing_value
+            
+            # Define which keys should be encrypted
+            encrypt_keys = ['smtp_password', 'client_secret', 'tenant_id', 'client_id']
+            return self.config_manager.set_category('email', merged_config, encrypt_keys)
         except Exception as e:
             current_app.logger.error(f"Email configuration update error: {str(e)}")
             return False

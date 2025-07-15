@@ -2,7 +2,34 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
-import { Shield, Plus, Download, Upload, Key, Globe, Calendar, CheckCircle, AlertTriangle, RefreshCw, Trash2, Settings } from 'lucide-react';
+import { Shield, Plus, Download, Upload, Key, Globe, Calendar, CheckCircle, AlertTriangle, RefreshCw, Trash2, Settings, HelpCircle, ExternalLink } from 'lucide-react';
+
+const Tooltip = ({ content, children, darkMode }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  return (
+    <div className="relative inline-block">
+      <div
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+      >
+        {children}
+      </div>
+      {showTooltip && (
+        <div className={`absolute z-50 px-3 py-2 text-sm rounded-lg shadow-lg max-w-xs bottom-full left-1/2 transform -translate-x-1/2 mb-1 ${
+          darkMode 
+            ? 'bg-gray-800 text-gray-200 border border-gray-600' 
+            : 'bg-gray-900 text-white'
+        }`}>
+          {content}
+          <div className={`absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent ${
+            darkMode ? 'border-t-gray-800' : 'border-t-gray-900'
+          }`} />
+        </div>
+      )}
+    </div>
+  );
+};
 
 const SSLManagement = ({ darkMode }) => {
   const [certificates, setCertificates] = useState([]);
@@ -92,29 +119,67 @@ const SSLManagement = ({ darkMode }) => {
           </p>
         </div>
         <div className="flex space-x-3">
-          <Button
-            onClick={() => setShowCSRModal(true)}
-            variant="outline"
-            className={darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}
+          <Tooltip 
+            content="Generate a Certificate Signing Request (CSR) for getting certificates from a Certificate Authority"
+            darkMode={darkMode}
           >
-            <Key className="h-4 w-4 mr-2" />
-            Generate CSR
-          </Button>
-          <Button
-            onClick={() => setShowUploadModal(true)}
-            variant="outline"
-            className={darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}
+            <Button
+              onClick={() => setShowCSRModal(true)}
+              variant="outline"
+              className={darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}
+            >
+              <Key className="h-4 w-4 mr-2" />
+              Generate CSR
+            </Button>
+          </Tooltip>
+          <Tooltip 
+            content="Upload existing SSL certificate files (private key and certificate)"
+            darkMode={darkMode}
           >
-            <Upload className="h-4 w-4 mr-2" />
-            Upload Certificate
-          </Button>
-          <Button
-            onClick={() => setShowLetsEncryptModal(true)}
-            className="bg-green-600 hover:bg-green-700 text-white"
+            <Button
+              onClick={() => setShowUploadModal(true)}
+              variant="outline"
+              className={darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Certificate
+            </Button>
+          </Tooltip>
+          <Tooltip 
+            content="Automatically obtain and manage SSL certificates using Let's Encrypt with Cloudflare DNS"
+            darkMode={darkMode}
           >
-            <Shield className="h-4 w-4 mr-2" />
-            Let's Encrypt
-          </Button>
+            <Button
+              onClick={() => setShowLetsEncryptModal(true)}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Let's Encrypt
+            </Button>
+          </Tooltip>
+          <button
+            type="button"
+            onClick={() => {
+              // Navigate to documentation and then to SSL config section
+              window.location.hash = 'docs';
+              setTimeout(() => {
+                const url = new URL(window.location);
+                url.searchParams.set('section', 'system-admin');
+                url.searchParams.set('content', 'ssl-config');
+                window.history.replaceState({}, '', url);
+                window.dispatchEvent(new HashChangeEvent('hashchange'));
+              }, 100);
+            }}
+            className={`flex items-center space-x-1 text-xs px-3 py-2 rounded border transition-colors ${
+              darkMode 
+                ? 'border-gray-600 text-gray-400 hover:text-gray-300 hover:border-gray-500' 
+                : 'border-gray-300 text-gray-600 hover:text-gray-700 hover:border-gray-400'
+            }`}
+          >
+            <HelpCircle className="w-4 h-4" />
+            <span>SSL Guide</span>
+            <ExternalLink className="w-3 h-3" />
+          </button>
         </div>
       </div>
 
@@ -778,15 +843,21 @@ const LetsEncryptModal = ({ darkMode, onClose, onSuccess, makeAuthenticatedReque
           ) : (
             <form onSubmit={handleConfigure} className="space-y-4">
               <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <label className={`flex items-center text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Domain Name *
+                  <Tooltip
+                    content="The domain name for which you want to generate the SSL certificate. Must be managed by Cloudflare."
+                    darkMode={darkMode}
+                  >
+                    <HelpCircle className="w-4 h-4 ml-1 cursor-help opacity-60 hover:opacity-100" />
+                  </Tooltip>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.domain}
                   onChange={(e) => setFormData({...formData, domain: e.target.value})}
-                  placeholder="example.com"
+                  placeholder="yourdomain.com"
                   className={`w-full px-3 py-2 rounded-lg border ${
                     darkMode 
                       ? 'bg-gray-800 border-gray-700 text-white' 
@@ -796,15 +867,22 @@ const LetsEncryptModal = ({ darkMode, onClose, onSuccess, makeAuthenticatedReque
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <label className={`flex items-center text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Cloudflare API Key *
+                  <Tooltip
+                    content="Get this from Cloudflare Dashboard → My Profile → API Tokens. Create a custom token with Zone:DNS:Edit and Zone:Zone:Read permissions for your domain."
+                    darkMode={darkMode}
+                  >
+                    <HelpCircle className="w-4 h-4 ml-1 cursor-help opacity-60 hover:opacity-100" />
+                  </Tooltip>
                 </label>
                 <input
                   type="password"
                   required
                   value={formData.cloudflare_api_key}
                   onChange={(e) => setFormData({...formData, cloudflare_api_key: e.target.value})}
-                  placeholder="Your Cloudflare API key"
+                  placeholder="••••••••••••••••••••••••••••••••••••••••"
+                  autoComplete="off"
                   className={`w-full px-3 py-2 rounded-lg border ${
                     darkMode 
                       ? 'bg-gray-800 border-gray-700 text-white' 
@@ -814,14 +892,20 @@ const LetsEncryptModal = ({ darkMode, onClose, onSuccess, makeAuthenticatedReque
               </div>
 
               <div>
-                <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                <label className={`flex items-center text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Zone ID (Optional)
+                  <Tooltip
+                    content="Found in Cloudflare Dashboard → Your Domain → Overview → Zone ID. Auto-detected if left empty, but providing it speeds up the process."
+                    darkMode={darkMode}
+                  >
+                    <HelpCircle className="w-4 h-4 ml-1 cursor-help opacity-60 hover:opacity-100" />
+                  </Tooltip>
                 </label>
                 <input
                   type="text"
                   value={formData.zone_id}
                   onChange={(e) => setFormData({...formData, zone_id: e.target.value})}
-                  placeholder="Auto-detected if left empty"
+                  placeholder="1234567890abcdef1234567890abcdef"
                   className={`w-full px-3 py-2 rounded-lg border ${
                     darkMode 
                       ? 'bg-gray-800 border-gray-700 text-white' 
@@ -830,13 +914,40 @@ const LetsEncryptModal = ({ darkMode, onClose, onSuccess, makeAuthenticatedReque
                 />
               </div>
 
-              <div className={`p-3 rounded-lg ${
-                darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'
-              }`}>
-                <p className={`text-xs ${darkMode ? 'text-blue-400' : 'text-blue-700'}`}>
-                  <strong>Note:</strong> This will use DNS-01 challenge via Cloudflare to automatically 
-                  obtain and renew SSL certificates from Let's Encrypt.
-                </p>
+              <div className={`p-4 rounded-lg ${darkMode ? 'bg-blue-900/20 border border-blue-800' : 'bg-blue-50 border border-blue-200'}`}>
+                <div className="flex items-start space-x-2">
+                  <div className="flex-1">
+                    <p className={`text-sm ${darkMode ? 'text-blue-300' : 'text-blue-700'}`}>
+                      <strong>Setup Instructions:</strong><br />
+                      1. Add your domain to Cloudflare<br />
+                      2. Update nameservers at your domain registrar<br />
+                      3. Create API token with DNS:Edit and Zone:Read permissions<br />
+                      4. Enter domain and API token here for automatic SSL
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // Navigate to documentation and then to SSL config section
+                      window.location.hash = 'docs';
+                      setTimeout(() => {
+                        const url = new URL(window.location);
+                        url.searchParams.set('section', 'system-admin');
+                        url.searchParams.set('content', 'ssl-config');
+                        window.history.replaceState({}, '', url);
+                        window.dispatchEvent(new HashChangeEvent('hashchange'));
+                      }, 100);
+                    }}
+                    className={`flex items-center space-x-1 text-xs px-2 py-1 rounded transition-colors ${
+                      darkMode 
+                        ? 'bg-blue-800 text-blue-200 hover:bg-blue-700' 
+                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    <span>Full Guide</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
 
               <div className="flex space-x-3 pt-4">

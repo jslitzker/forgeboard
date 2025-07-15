@@ -423,6 +423,7 @@ const CreateUserModal = ({ darkMode, onClose, onCreateUser }) => {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({...formData, password: e.target.value})}
+                autoComplete="new-password"
                 className={`w-full px-3 py-2 rounded-lg border ${
                   darkMode 
                     ? 'bg-gray-800 border-gray-700 text-white' 

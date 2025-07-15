@@ -7,6 +7,9 @@ import sys
 import subprocess
 import tempfile
 import shutil
+import logging
+from logging.handlers import RotatingFileHandler
+from datetime import datetime
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
@@ -35,6 +38,47 @@ bootstrap_config = get_bootstrap_config()
 
 # Set Flask secret key from bootstrap config
 app.config['SECRET_KEY'] = bootstrap_config.get_app_secret_key()
+
+# Set up comprehensive logging
+logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(logs_dir, exist_ok=True)
+
+# Choose log file based on debug mode
+if app.debug:
+    log_file = os.path.join(logs_dir, 'forgeboard-debug.log')
+    log_level = logging.DEBUG
+    startup_msg = 'ForgeBoard debug startup'
+else:
+    log_file = os.path.join(logs_dir, 'forgeboard.log')
+    log_level = logging.INFO
+    startup_msg = 'ForgeBoard startup'
+
+# Set up file handler
+file_handler = RotatingFileHandler(
+    log_file,
+    maxBytes=10240000,  # 10MB
+    backupCount=10
+)
+file_handler.setFormatter(logging.Formatter(
+    '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+))
+file_handler.setLevel(log_level)
+
+# Configure both app logger and root logger to capture all activity
+app.logger.addHandler(file_handler)
+app.logger.setLevel(log_level)
+
+# Also configure werkzeug logger to capture HTTP requests
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.addHandler(file_handler)
+werkzeug_logger.setLevel(log_level)
+
+# Configure root logger to capture any other logs
+root_logger = logging.getLogger()
+root_logger.addHandler(file_handler)
+root_logger.setLevel(log_level)
+
+app.logger.info(startup_msg)
 
 # Initialize database
 init_database(app)
@@ -1365,10 +1409,13 @@ def update_email_config():
     
     data = request.get_json()
     
-    if email_service.update_configuration(data):
-        return jsonify({'message': 'Email configuration updated successfully'}), 200
-    else:
-        return jsonify({'error': 'Failed to update email configuration'}), 400
+    try:
+        if email_service.update_configuration(data):
+            return jsonify({'message': 'Email configuration updated successfully'}), 200
+        else:
+            return jsonify({'error': 'Failed to update email configuration - check server logs for details'}), 400
+    except Exception as e:
+        return jsonify({'error': f'Email configuration error: {str(e)}'}), 400
 
 
 @app.route('/api/admin/email/test', methods=['POST'])
@@ -1984,6 +2031,103 @@ def delete_ssl_certificate(domain):
     except Exception as e:
         current_app.logger.error(f"SSL delete error: {str(e)}")
         return jsonify({'error': 'Failed to delete certificate'}), 500
+
+
+@app.route('/api/admin/logs', methods=['GET'])
+@admin_required
+def get_backend_logs():
+    """
+    Get recent backend logs (admin only)
+    ---
+    tags:
+      - Admin
+    security:
+      - BearerAuth: []
+    parameters:
+      - name: lines
+        in: query
+        type: integer
+        default: 100
+        description: Number of log lines to return
+    responses:
+      200:
+        description: Backend logs
+      401:
+        description: Not authenticated
+      403:
+        description: Admin required
+    """
+    try:
+        lines = request.args.get('lines', 100, type=int)
+        log_records = []
+        
+        # Determine log file path
+        logs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+        if app.debug:
+            log_file = os.path.join(logs_dir, 'forgeboard-debug.log')
+        else:
+            log_file = os.path.join(logs_dir, 'forgeboard.log')
+        
+        # Read log file if it exists
+        if os.path.exists(log_file):
+            try:
+                with open(log_file, 'r') as f:
+                    log_lines = f.readlines()
+                    
+                # Parse recent log lines
+                for line in log_lines[-lines:]:
+                    line = line.strip()
+                    if line:
+                        # Parse log format: "2024-01-01 12:00:00,000 INFO: message"
+                        parts = line.split(' ', 3)
+                        if len(parts) >= 3:
+                            timestamp_str = f"{parts[0]} {parts[1]}"
+                            level = parts[2].rstrip(':')
+                            message = parts[3] if len(parts) > 3 else ''
+                            
+                            # Convert timestamp to ISO format
+                            try:
+                                dt = datetime.strptime(timestamp_str.split(',')[0], '%Y-%m-%d %H:%M:%S')
+                                iso_timestamp = dt.isoformat() + 'Z'
+                            except:
+                                iso_timestamp = timestamp_str
+                            
+                            log_records.append({
+                                'timestamp': iso_timestamp,
+                                'level': level,
+                                'message': message
+                            })
+                        else:
+                            # Handle malformed lines
+                            log_records.append({
+                                'timestamp': datetime.now().isoformat() + 'Z',
+                                'level': 'INFO',
+                                'message': line
+                            })
+            except Exception as e:
+                app.logger.error(f"Error reading log file: {str(e)}")
+                log_records = [{
+                    'timestamp': datetime.now().isoformat() + 'Z',
+                    'level': 'ERROR',
+                    'message': f'Failed to read log file: {str(e)}'
+                }]
+        else:
+            # Log file doesn't exist yet
+            log_records = [{
+                'timestamp': datetime.now().isoformat() + 'Z',
+                'level': 'INFO',
+                'message': f'Log file not found at {log_file}. Logs will appear after first backend activity.'
+            }]
+        
+        return jsonify({
+            'logs': log_records,
+            'total': len(log_records),
+            'log_file': log_file
+        }), 200
+        
+    except Exception as e:
+        app.logger.error(f"Error in get_backend_logs: {str(e)}")
+        return jsonify({'error': f'Failed to get logs: {str(e)}'}), 500
 
 
 if __name__ == '__main__':
