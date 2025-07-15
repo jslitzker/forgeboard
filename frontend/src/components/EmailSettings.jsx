@@ -163,15 +163,36 @@ const EmailSettings = ({ darkMode }) => {
         if (!showLogs) {
           setShowLogs(true);
         }
+      } else {
+        // Handle authentication or other errors
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Logs fetch failed:', errorData.message || response.statusText);
+        
+        // Show error in logs panel
+        setLogs([{
+          timestamp: new Date().toISOString(),
+          level: 'ERROR',
+          message: `Failed to fetch logs: ${errorData.message || response.statusText} (Status: ${response.status})`
+        }]);
       }
     } catch (error) {
       console.error('Failed to fetch logs:', error);
+      setLogs([{
+        timestamp: new Date().toISOString(),
+        level: 'ERROR',
+        message: `Network error fetching logs: ${error.message}`
+      }]);
     } finally {
       setLogsLoading(false);
     }
   };
 
   const formatLogLevel = (level) => {
+    // Handle both numeric systemd levels and string levels from Flask
+    if (typeof level === 'string') {
+      return level.toUpperCase();
+    }
+    
     const levelMap = {
       '3': 'ERROR',
       '4': 'WARNING', 
@@ -185,7 +206,11 @@ const EmailSettings = ({ darkMode }) => {
   const formatTimestamp = (timestamp) => {
     if (!timestamp) return '';
     try {
-      // Convert microseconds to milliseconds
+      // Handle both ISO strings and numeric timestamps
+      if (typeof timestamp === 'string') {
+        return new Date(timestamp).toLocaleString();
+      }
+      // Convert microseconds to milliseconds for numeric timestamps
       const ms = parseInt(timestamp) / 1000;
       return new Date(ms).toLocaleString();
     } catch {
